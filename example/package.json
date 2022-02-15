@@ -8,6 +8,10 @@
     "build": "parcel build index.html"
   },
   "dependencies": {
+    "@emotion/react": "^11.7.1",
+    "@emotion/styled": "^11.6.0",
+    "@mui/icons-material": "^5.4.1",
+    "@mui/material": "^5.4.1",
     "react-app-polyfill": "^1.0.0"
   },
   "alias": {
@@ -18,7 +22,7 @@
   "devDependencies": {
     "@types/react": "^16.9.11",
     "@types/react-dom": "^16.8.4",
-    "parcel": "^1.12.3",
+    "parcel": "1.12.3",
     "typescript": "^3.4.5"
   }
 }
