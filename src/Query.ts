@@ -57,7 +57,7 @@ export default class Query{
     }
 
     metaQuery(jpQuery: any, cb?: any){
-        const state = (this as any).getMatas()
+        const state = (this as any).getAllMata()
         try{
             let result: any = false
             if(is_callable(cb)){

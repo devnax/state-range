@@ -51,7 +51,7 @@ export default class Meta extends Query{
       return [data, (newdata: object) => this.setMeta(meta_key, {...data, ...newdata})]
    }
 
-   getAllMatas(){
+   getAllMata(){
       (this as any).addDispatch()
       return META[this.constructor.name]
    }
