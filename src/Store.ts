@@ -119,15 +119,31 @@ export default class Store extends Meta{
       }
       this.dispatch()
    }
-   
-   count(){
-      this.addDispatch()
-      return this.getData().length
+
+   deleteAll(){
+      STATE[this.constructor.name] = []
+      if(typeof (this as any).onUpdate == 'function'){
+         (this as any).onUpdate('delete')
+      }
+      this.dispatch()
    }
    
-   find(where?: object | string){
+   count(where?: object | string){
+      this.addDispatch()
+      if(where){
+         return this.find(where).length
+      }
+      return this.getData()?.length || []
+   }
+   
+   find(where: object | string){
       this.addDispatch()
       return this.query(where) || []
+   }
+
+   findAll(){
+      this.addDispatch()
+      return this.getData()
    }
    
    findById(id: string){

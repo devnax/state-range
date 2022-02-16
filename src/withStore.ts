@@ -1,11 +1,11 @@
 import {useMemo, useState, useEffect, createElement} from 'react'
-import {uid} from './utils'
+import {is_array, uid} from './utils'
 import Stock from './Stock'
 
 export default (Comp: any, resolve?: Function) => {
    const token = uid()
    
-   return (props?:object) => {
+   return (props?: any) => {
       Stock.currentToken = token 
       const [, dispatch] = useState('')
       const _compId = useMemo(() => {
@@ -25,8 +25,15 @@ export default (Comp: any, resolve?: Function) => {
 
       if(typeof resolve === 'function'){
          let deps  = resolve(props)
-         deps      = deps ? {...(props || {}), ...deps} : props
-         return useMemo(() => createElement(Comp, deps), Object.values(deps))
+         let compare:any = []
+         if(is_array(deps)){
+            deps      = props
+            compare   = deps
+         }else{
+            deps      = deps ? {...(props || {}), ...deps} : props
+            compare   = Object.values(deps)
+         }
+         return useMemo(() => createElement(Comp, deps), compare)
       }
       return createElement(Comp, props)
    }
