@@ -112,15 +112,18 @@ export default class Store extends Meta{
       if(is_string(where)){
          where = {_id: where}
       }
+      this._observe   = Date.now()
       this.query(where, () => null)
       STATE[this.constructor.name] = this.query('@')
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('delete')
       }
+
       this.dispatch()
    }
 
    deleteAll(){
+      this._observe   = Date.now()
       STATE[this.constructor.name] = []
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('delete')

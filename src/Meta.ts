@@ -57,6 +57,7 @@ export default class Meta extends Query{
    }
 
    deleteMeta(meta_key: string | number){
+      (this as any)._observe   = Date.now()
       this.metaQuery({meta_key}, () => null)
       META[this.constructor.name] = this.metaQuery('@')
       if(typeof (this as any).onUpdate == 'function'){
@@ -66,6 +67,7 @@ export default class Meta extends Query{
    }
 
    deleteAllMeta(){
+      (this as any)._observe   = Date.now()
       META[this.constructor.name] = []
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('deleteAllMeta')
