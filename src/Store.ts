@@ -9,7 +9,7 @@ const STATE:any = {
 
 export default class Store extends Meta{
    private dispatchable:any   = []
-   observe            = 0
+   private _observe            = 0
    
    constructor(){
       super()
@@ -30,16 +30,29 @@ export default class Store extends Meta{
       }
    }
    
+   
    protected makeRow(row: any){
       const _id      = row._id || uid()
       const now      = Date.now()
-      this.observe   = now
+      this._observe   = now
       
       return {
          ...row,
          _id,
          observe: now
       }
+   }
+
+   observe(){
+      return this._observe
+   }
+
+   observeRow(id: string){
+      const data = this.findById(id)
+      if(data){
+         return data.observe
+      }
+      return 0
    }
    
    getState(){

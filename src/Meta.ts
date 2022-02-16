@@ -15,7 +15,7 @@ export default class Meta extends Query{
    }
 
    setMeta(meta_key: string | number, meta_value: any){
-      const exists = this.getInfo(meta_key)
+      const exists = this.getMetaInfo(meta_key)
 
       if(exists){
          this.metaQuery({meta_key}, (prevRow: object) => {
@@ -36,11 +36,6 @@ export default class Meta extends Query{
       (this as any).dispatch()
    }
 
-   getMatas(){
-      (this as any).addDispatch()
-      return META[this.constructor.name]
-   }
-
    getMeta(meta_key: string | number, def?: any){
       (this as any).addDispatch()
       const exists = this.metaQuery({meta_key})
@@ -51,14 +46,14 @@ export default class Meta extends Query{
       }
    }
 
-   getInfo(meta_key: string | number, def?: object){
+   useMeta(meta_key: string | number, def?: object){
+      const data = this.getMeta(meta_key, def)
+      return [data, (newdata: object) => this.setMeta(meta_key, {...data, ...newdata})]
+   }
+
+   getAllMatas(){
       (this as any).addDispatch()
-      const exists = this.metaQuery({meta_key})
-      if(exists.length){
-         return exists[0]
-      }else{
-         return def ? def : null
-      }
+      return META[this.constructor.name]
    }
 
    deleteMeta(meta_key: string | number){
@@ -76,5 +71,23 @@ export default class Meta extends Query{
          (this as any).onUpdate('deleteAllMeta')
       }
       (this as any).dispatch()
+   }
+
+   getMetaInfo(meta_key: string | number, def?: object){
+      (this as any).addDispatch()
+      const exists = this.metaQuery({meta_key})
+      if(exists.length){
+         return exists[0]
+      }else{
+         return def ? def : null
+      }
+   }
+
+   observeMeta(meta_key: string | number){
+      const meta = this.getMetaInfo(meta_key)
+      if(meta){
+         return meta.observe
+      }
+      return 0
    }
 }
