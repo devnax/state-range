@@ -1,9 +1,6 @@
 import Query from './Query'
 
-
-const META:any = {
-   Media: []
-}
+const META:any = {}
 
 
 export default class Meta extends Query{

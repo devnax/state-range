@@ -1,4 +1,4 @@
-import { is_callable, is_number, is_object, is_string } from "./utils";
+import { is_callable, is_number, is_object, is_string } from "../utils";
 import jpath from 'jsonpath'
 
 export default class Query{

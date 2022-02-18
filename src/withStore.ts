@@ -1,6 +1,6 @@
 import {useMemo, useState, useEffect, createElement} from 'react'
 import {is_array, uid} from './utils'
-import Stock from './Stock'
+import Stock from './Store/Stock'
 
 export default (Comp: any, resolve?: Function) => {
    const token = uid()

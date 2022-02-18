@@ -1,11 +1,12 @@
 import Stock from './Stock'
-
-import {uid, is_object, is_number, is_callable, is_string} from './utils'
+import {uid, is_object, is_number, is_callable, is_string} from '../utils'
 import Meta from './Meta'
+import { DISPATCH } from '../dispatch'
 
-const STATE:any = {
-   
-}
+
+
+
+const STATE:any = {}
 
 export default class Store extends Meta{
    private dispatchable:any   = []
@@ -25,8 +26,10 @@ export default class Store extends Meta{
    }
    
    protected dispatch(){
-      for(let item of this.dispatchable){
-         Stock.dispatch(item)
+      if(!DISPATCH.noDispatch){
+         for(let item of this.dispatchable){
+            Stock.dispatch(item)
+         }
       }
    }
    
