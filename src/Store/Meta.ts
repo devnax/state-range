@@ -45,7 +45,8 @@ export default class Meta extends Query{
 
    useMeta(meta_key: string | number, def?: object){
       const data = this.getMeta(meta_key, def)
-      return [data, (newdata: object) => this.setMeta(meta_key, {...data, ...newdata})]
+      const observe = this.observeMeta(meta_key)
+      return [{...data, observe}, (newdata: object) => this.setMeta(meta_key, {...data, ...newdata})]
    }
 
    getAllMata(){
