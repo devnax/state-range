@@ -33,7 +33,7 @@ export default (Comp: any, resolve?: Function) => {
             deps      = deps ? deps : props
             compare   = Object.values(deps)
          }
-         return useMemo(() => createElement(Comp, deps), compare)
+         return useMemo(() => createElement(Comp, {...deps, ...props}), compare)
       }
       return createElement(Comp, props)
    }
