@@ -169,17 +169,22 @@ export default class Store extends Meta{
       if(is_string(where)){
          where = {_id: where}
       }
-      this.query(where, (prevRow: object) => {
+      this.query(where, (prevRow: any) => {
          if(is_callable(callback)){
             prevRow = callback(prevRow)
          }
-         const row = this.makeRow(prevRow)
+
+         let change = false
          for(let col of cols){
-            if(row[col]){
-               delete row[col]
+            if(prevRow[col]){
+               delete prevRow[col]
+               change = true
             }
          }
-         return {...row}
+         if(change){
+            prevRow = this.makeRow(prevRow)
+         }
+         return {...prevRow}
       })
 
       if(typeof (this as any).onUpdate == 'function'){
