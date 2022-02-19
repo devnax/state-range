@@ -164,6 +164,29 @@ export default class Store extends Meta{
       }
       this.dispatch()
    }
+
+   deleteColumns(cols: string[], where: string | object, callback?: Function | any){
+      if(is_string(where)){
+         where = {_id: where}
+      }
+      this.query(where, (prevRow: object) => {
+         if(is_callable(callback)){
+            prevRow = callback(prevRow)
+         }
+         const row = this.makeRow(prevRow)
+         for(let col of cols){
+            if(row[col]){
+               delete row[col]
+            }
+         }
+         return {...row}
+      })
+
+      if(typeof (this as any).onUpdate == 'function'){
+         (this as any).onUpdate('deleteColumns')
+      }
+      this.dispatch()
+   }
    
    count(where?: object | string){
       this.addDispatch()
