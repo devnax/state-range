@@ -78,6 +78,21 @@ export default class Store extends Meta{
       return row
    }
    
+   insertMany(rows: any[]){
+      const rows_ids = []
+
+      for(let row of rows){
+         row = this.makeRow(row)
+         rows_ids.push(row._id)
+         STATE[this.constructor.name].push(row)
+      }
+      if(typeof (this as any).onUpdate == 'function'){
+         (this as any).onUpdate('insertMany')
+      }
+      this.dispatch()
+      return rows_ids
+   }
+   
    insertAfter(row: object, index: any){
       if(!is_object(row) || !is_number(index)){
          throw new Error("Row and index required!")
@@ -107,6 +122,22 @@ export default class Store extends Meta{
 
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('update')
+      }
+      this.dispatch()
+   }
+
+   updateAll(row: object, callback?: Function | any){
+
+      this.query(null, (prevRow: object) => {
+         if(is_callable(callback)){
+            prevRow = callback(prevRow)
+         }
+         const formate = this.makeRow(prevRow)
+         return {...formate, ...row, _id: formate._id}
+      })
+
+      if(typeof (this as any).onUpdate == 'function'){
+         (this as any).onUpdate('updateAll')
       }
       this.dispatch()
    }
