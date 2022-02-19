@@ -106,7 +106,7 @@ export default class Store extends Meta{
       return row
    }
    
-   update(row: object, where: string | object, callback?: Function | any){
+   update(row: object, where?: any, callback?: Function | any){
 
       if(is_string(where)){
          where = {_id: where}
@@ -142,7 +142,7 @@ export default class Store extends Meta{
       this.dispatch()
    }
    
-   delete(where: string | object){
+   delete(where?: any){
       if(is_string(where)){
          where = {_id: where}
       }
@@ -165,7 +165,7 @@ export default class Store extends Meta{
       this.dispatch()
    }
 
-   deleteColumns(cols: string[], where: string | object, callback?: Function | any){
+   deleteColumns(cols: string[], where?: any, callback?: Function | any){
       if(is_string(where)){
          where = {_id: where}
       }
@@ -188,7 +188,7 @@ export default class Store extends Meta{
       this.dispatch()
    }
    
-   count(where?: object | string){
+   count(where?: any){
       this.addDispatch()
       if(where){
          return this.find(where).length
@@ -196,7 +196,7 @@ export default class Store extends Meta{
       return this.getData()?.length || []
    }
    
-   find(where: object | string){
+   find(where?: any){
       this.addDispatch()
       return this.query(where) || []
    }
