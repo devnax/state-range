@@ -30,11 +30,11 @@ export default class Meta extends Query{
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('addMeta')
       }
-      (this as any).dispatch()
+      (this as any).dispatch(true)
    }
 
    getMeta(meta_key: string | number, def?: any){
-      (this as any).addDispatch()
+      (this as any).addDispatch(true)
       const exists = this.metaQuery({meta_key})
       if(exists.length){
          return exists[0].meta_value
@@ -50,7 +50,7 @@ export default class Meta extends Query{
    }
 
    getAllMata(){
-      (this as any).addDispatch()
+      (this as any).addDispatch(true)
       return META[this.constructor.name]
    }
 
@@ -61,7 +61,7 @@ export default class Meta extends Query{
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('deleteMeta')
       }
-      (this as any).dispatch()
+      (this as any).dispatch(true)
    }
 
    deleteAllMeta(){
@@ -70,11 +70,11 @@ export default class Meta extends Query{
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('deleteAllMeta')
       }
-      (this as any).dispatch()
+      (this as any).dispatch(true)
    }
 
    getMetaInfo(meta_key: string | number, def?: object){
-      (this as any).addDispatch()
+      (this as any).addDispatch(true)
       const exists = this.metaQuery({meta_key})
       if(exists.length){
          return exists[0]

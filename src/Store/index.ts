@@ -9,8 +9,9 @@ import { DISPATCH } from '../dispatch'
 const STATE:any = {}
 
 export default class Store extends Meta{
-   private dispatchable:any   = []
-   private _observe            = 0
+   private dispatchable:any      = []
+   private dispatchTimeout: any  = false
+   private _observe              = 0
    
    constructor(){
       super()
@@ -19,17 +20,27 @@ export default class Store extends Meta{
       }
    }
    
-   protected addDispatch(){
+   protected addDispatch(isMeta = false){
       if(Stock.currentToken && !this.dispatchable.includes(Stock.currentToken)){
-         this.dispatchable.push(Stock.currentToken)
+         this.dispatchable.push({token: Stock.currentToken, meta: isMeta})
       }
    }
    
-   protected dispatch(){
+   protected dispatch(isMeta = false){
       if(!DISPATCH.noDispatch){
-         for(let item of this.dispatchable){
-            Stock.dispatch(item)
+         if(this.dispatchTimeout){
+            clearTimeout(this.dispatchTimeout)
          }
+         this.dispatchTimeout = setTimeout(() => {
+            for(let item of this.dispatchable){
+               const {token, meta} = item
+               if(isMeta && meta){
+                  Stock.dispatch(token)
+               }else{
+                  Stock.dispatch(token)
+               }
+            }
+         }, 3)
       }
    }
    

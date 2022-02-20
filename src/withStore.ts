@@ -27,13 +27,12 @@ export default (Comp: any, resolve?: Function) => {
          let deps  = resolve(props)
          let compare:any = []
          if(is_array(deps)){
-            deps      = props
             compare   = deps
          }else{
             deps      = deps ? deps : props
             compare   = Object.values(deps)
          }
-         return useMemo(() => createElement(Comp, {...deps, ...props}), compare)
+         return useMemo(() => createElement(Comp, props), compare)
       }
       return createElement(Comp, props)
    }
