@@ -3,14 +3,13 @@ import {uid, is_object, is_number, is_callable, is_string} from '../utils'
 import Meta from './Meta'
 import { DISPATCH } from '../dispatch'
 
-
-
-
 const STATE:any = {}
 
 export default class Store extends Meta{
    private dispatchable:any      = []
+   private dispatchableMeta:any  = []
    private dispatchTimeout: any  = false
+   private dispatchMetaTimeout: any  = false
    private _observe              = 0
    
    constructor(){
@@ -21,26 +20,38 @@ export default class Store extends Meta{
    }
    
    protected addDispatch(isMeta = false){
-      if(Stock.currentToken && !this.dispatchable.includes(Stock.currentToken)){
-         this.dispatchable.push({token: Stock.currentToken, meta: isMeta})
+      if(Stock.currentToken){
+         if(!this.dispatchableMeta.includes(Stock.currentToken) && !this.dispatchable.includes(Stock.currentToken)){
+            if(isMeta){
+               this.dispatchableMeta.push(Stock.currentToken)
+            }else{
+               this.dispatchable.push(Stock.currentToken)
+            }
+         }
       }
    }
-   
+
    protected dispatch(isMeta = false){
       if(!DISPATCH.noDispatch){
-         if(this.dispatchTimeout){
-            clearTimeout(this.dispatchTimeout)
-         }
-         this.dispatchTimeout = setTimeout(() => {
-            for(let item of this.dispatchable){
-               const {token, meta} = item
-               if(isMeta && meta){
-                  Stock.dispatch(token)
-               }else{
+         if(isMeta){
+            if(this.dispatchMetaTimeout){
+               clearTimeout(this.dispatchMetaTimeout)
+            }
+            this.dispatchMetaTimeout = setTimeout(() => {
+               for(let token of this.dispatchableMeta){
                   Stock.dispatch(token)
                }
+            }, 0)
+         }else{
+            if(this.dispatchTimeout){
+               clearTimeout(this.dispatchTimeout)
             }
-         }, 3)
+            this.dispatchTimeout = setTimeout(() => {
+               for(let token of this.dispatchable){
+                  Stock.dispatch(token)
+               }
+            }, 0)
+         }
       }
    }
    
@@ -49,12 +60,7 @@ export default class Store extends Meta{
       const _id      = row._id || uid()
       const now      = Date.now()
       this._observe   = now
-      
-      return {
-         ...row,
-         _id,
-         observe: now
-      }
+      return {...row,_id,observe: now}
    }
 
    observe(){

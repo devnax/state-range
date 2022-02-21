@@ -3,7 +3,9 @@ import * as React from 'react';
 import AddIcon from '@mui/icons-material/Add';
 import ModeEditIcon from '@mui/icons-material/ModeEdit';
 import Todo from '../models/Todo'
-import {withStore} from '../../../.'
+import {withStore, Store} from '../../../.' 
+
+
 
 
 const InputField = () => {
