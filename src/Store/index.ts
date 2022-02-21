@@ -7,9 +7,6 @@ const STATE:any = {}
 
 export default class Store extends Meta{
    private dispatchable:any      = []
-   private dispatchableMeta:any  = []
-   private dispatchTimeout: any  = false
-   private dispatchMetaTimeout: any  = false
    private _observe              = 0
    
    constructor(){
@@ -19,38 +16,16 @@ export default class Store extends Meta{
       }
    }
    
-   protected addDispatch(isMeta = false){
-      if(Stock.currentToken){
-         if(!this.dispatchableMeta.includes(Stock.currentToken) && !this.dispatchable.includes(Stock.currentToken)){
-            if(isMeta){
-               this.dispatchableMeta.push(Stock.currentToken)
-            }else{
-               this.dispatchable.push(Stock.currentToken)
-            }
-         }
+   protected addDispatch(){
+      if(Stock.currentToken && !this.dispatchable.includes(Stock.currentToken)){
+         this.dispatchable.push(Stock.currentToken)
       }
    }
 
-   protected dispatch(isMeta = false){
+   protected dispatch(){
       if(!DISPATCH.noDispatch){
-         if(isMeta){
-            if(this.dispatchMetaTimeout){
-               clearTimeout(this.dispatchMetaTimeout)
-            }
-            this.dispatchMetaTimeout = setTimeout(() => {
-               for(let token of this.dispatchableMeta){
-                  Stock.dispatch(token)
-               }
-            }, 0)
-         }else{
-            if(this.dispatchTimeout){
-               clearTimeout(this.dispatchTimeout)
-            }
-            this.dispatchTimeout = setTimeout(() => {
-               for(let token of this.dispatchable){
-                  Stock.dispatch(token)
-               }
-            }, 0)
+         for(let token of this.dispatchable){
+            Stock.dispatch(token)
          }
       }
    }
