@@ -8,10 +8,13 @@ export default class Query{
         if(is_number(ex)){
             _q = `$[${ex}]` // with index
         }else if(is_string(ex)){
-            if(ex.charAt(0) == '@'){
+            // ID
+            if(ex.charAt(0) == '_'){
+                _q = `$[?(@._id=='${ex}')]`
+            }else if(ex.charAt(0) == '@'){
                 _q = `$[?(${ex})]`
             }else{
-                _q = `$[?(@._id=='${ex}')]`
+                _q = `$${ex}` // jsonpat expression
             }
         }else if(is_object(ex)){
             let _and = ""

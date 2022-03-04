@@ -32,7 +32,7 @@ export default class Store extends Meta{
    
    
    protected makeRow(row: any){
-      const _id      = row._id || uid()
+      const _id      = row._id || '_'+uid()
       const now      = Date.now()
       this._observe   = now
       return {...row,_id,observe: now}
@@ -40,14 +40,6 @@ export default class Store extends Meta{
 
    observe(){
       return this._observe
-   }
-
-   observeRow(id: string){
-      const data = this.findById(id)
-      if(data){
-         return data.observe
-      }
-      return 0
    }
    
    getState(){
@@ -98,10 +90,15 @@ export default class Store extends Meta{
       return row
    }
    
-   update(row: object, where?: any, callback?: Function | any){
+   update(row: object, where?: string | object | number, callback?: Function | any){
 
       if(is_string(where)){
          where = {_id: where}
+      }
+
+      const exists = this.find(where)
+      if(!exists){
+         return
       }
 
       this.query(where, (prevRow: object) => {
@@ -134,10 +131,15 @@ export default class Store extends Meta{
       this.dispatch()
    }
    
-   delete(where?: any){
+   delete(where?: string | object | number){
       if(is_string(where)){
          where = {_id: where}
       }
+      const exists = this.find(where)
+      if(!exists){
+         return
+      }
+      
       this._observe   = Date.now()
       this.query(where, () => null)
       STATE[this.constructor.name] = this.query('@')
@@ -157,10 +159,15 @@ export default class Store extends Meta{
       this.dispatch()
    }
 
-   deleteColumns(cols: string[], where?: any, callback?: Function | any){
+   deleteColumns(cols: string[], where?: string | object | number, callback?: Function | any){
       if(is_string(where)){
          where = {_id: where}
       }
+      const exists = this.find(where)
+      if(!exists){
+         return
+      }
+      
       this.query(where, (prevRow: any) => {
          if(is_callable(callback)){
             prevRow = callback(prevRow)
@@ -185,30 +192,37 @@ export default class Store extends Meta{
       this.dispatch()
    }
    
-   count(where?: any){
+   count(where?: string | object | number){
       this.addDispatch()
       if(where){
-         return this.find(where).length
+         return this.find(where)?.length || 0
       }
-      return this.getData()?.length || []
+      return this.getData()?.length || 0
    }
    
-   find(where?: any){
+   find(where?: string | object | number){
       this.addDispatch()
-      return this.query(where) || []
+      return this.query(where)
+   }
+
+   findFirst(where?: string | object | number){
+      this.addDispatch()
+      const ex = this.find(where)
+      if(ex){
+         return ex[0]
+      }
+   }
+   findById(_id: string){
+      this.addDispatch()
+      const ex = this.find({_id})
+      if(ex){
+         return ex[0]
+      }
    }
 
    findAll(){
       this.addDispatch()
       return this.getData()
-   }
-   
-   findById(id: string){
-      this.addDispatch()
-      const ex = this.find({_id: id})
-      if(ex){
-         return ex[0]
-      }
    }
    
    move(oldIdx: any, newIdx: number){
