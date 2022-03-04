@@ -97,7 +97,7 @@ export default class Store extends Meta{
       }
 
       const exists = this.find(where)
-      if(!exists){
+      if(!exists.length){
          return
       }
 
@@ -136,7 +136,7 @@ export default class Store extends Meta{
          where = {_id: where}
       }
       const exists = this.find(where)
-      if(!exists){
+      if(!exists.length){
          return
       }
       
@@ -164,7 +164,7 @@ export default class Store extends Meta{
          where = {_id: where}
       }
       const exists = this.find(where)
-      if(!exists){
+      if(!exists.length){
          return
       }
       
@@ -195,27 +195,27 @@ export default class Store extends Meta{
    count(where?: string | object | number){
       this.addDispatch()
       if(where){
-         return this.find(where)?.length || 0
+         return this.find(where).length
       }
-      return this.getData()?.length || 0
+      return this.getData().length
    }
    
    find(where?: string | object | number){
       this.addDispatch()
-      return this.query(where)
+      return this.query(where) || []
    }
 
    findFirst(where?: string | object | number){
       this.addDispatch()
       const ex = this.find(where)
-      if(ex){
+      if(ex.length){
          return ex[0]
       }
    }
    findById(_id: string){
       this.addDispatch()
       const ex = this.find({_id})
-      if(ex){
+      if(ex.length){
          return ex[0]
       }
    }
