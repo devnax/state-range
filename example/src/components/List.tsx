@@ -12,7 +12,7 @@ import Todo from '../models/Todo'
 
 const UIList = () => {
   const todos = Todo.find()
-  console.log("List")
+  // console.log("List")
   return (
     <List sx={{ width: '100%', mt: 2,bgcolor: 'background.paper' }}>
       {todos.map(({title, _id}, idx) => {

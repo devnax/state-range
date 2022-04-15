@@ -9,9 +9,9 @@ export default class Query{
             _q = `$[${ex}]` // with index
         }else if(is_string(ex)){
             // ID
-            if(ex.charAt(0) == '_'){
+            if(ex.charAt(0) === '_'){
                 _q = `$[?(@._id=='${ex}')]`
-            }else if(ex.charAt(0) == '@'){
+            }else if(ex.charAt(0) === '@'){
                 _q = `$[?(${ex})]`
             }else{
                 _q = `$${ex}` // jsonpat expression
@@ -39,7 +39,7 @@ export default class Query{
     }
 
     query(jpQuery: any, cb?: any){
-        const state = (this as any).getData()
+        const state = (this as any).STATE_DATA()
         try{
             let result: any = false
             if(is_callable(cb)){
@@ -60,7 +60,7 @@ export default class Query{
     }
 
     metaQuery(jpQuery: any, cb?: any){
-        const state = (this as any).getAllMata()
+        const state = (this as any).META_DATA()
         try{
             let result: any = false
             if(is_callable(cb)){
@@ -81,7 +81,7 @@ export default class Query{
     }
 
     queryNodes(jpQuery: any){
-        const state = (this as any).getData()
+        const state = (this as any).STATE_DATA()
         try{
             const result:any = jpath.nodes(
                 state, 

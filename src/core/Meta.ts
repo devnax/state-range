@@ -2,7 +2,6 @@ import Query from './Query'
 
 const META:any = {}
 
-
 export default class Meta extends Query{
    constructor(){
       super()
@@ -11,10 +10,12 @@ export default class Meta extends Query{
       }
    }
 
-   setMeta(meta_key: string | number, meta_value: any){
-      const exists = this.getMetaInfo(meta_key)
+   protected META_DATA = () => META[this.constructor.name]
 
-      if(exists){
+   setMeta(meta_key: string | number, meta_value: any){
+      const exists = this.metaQuery({meta_key})
+
+      if(exists.length){
          this.metaQuery({meta_key}, (prevRow: object) => {
             const row = (this as any).makeRow(prevRow)
             return {...row, meta_value, _id: row._id}
@@ -39,14 +40,14 @@ export default class Meta extends Query{
       if(exists.length){
          return exists[0].meta_value
       }else{
-         return def != undefined ? def : null
+         return def !== undefined ? def : null
       }
    }
 
-   useMeta(meta_key: string | number, def?: object){
+   useMeta(meta_key: string | number, def?: object): [any, (newdata: object) => any]{
       const data = this.getMeta(meta_key, def)
       const observe = this.observeMeta(meta_key)
-      return [{...data, observe}, (newdata: object) => this.setMeta(meta_key, {...data, ...newdata})]
+      return [{...data, observe}, (newdata: any) => this.setMeta(meta_key, {...data, ...newdata})]
    }
 
    getAllMata(){
@@ -83,11 +84,8 @@ export default class Meta extends Query{
       }
    }
 
-   observeMeta(meta_key: string | number){
+   observeMeta(meta_key: string | number): number{
       const meta = this.getMetaInfo(meta_key)
-      if(meta){
-         return meta.observe
-      }
-      return 0
+      return meta ? meta.observe : 0
    }
 }

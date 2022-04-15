@@ -1,7 +1,8 @@
-import Stock from './Stock'
+import Stack from './Stack'
 import {uid, is_object, is_number, is_callable, is_string} from '../utils'
 import Meta from './Meta'
 import { DISPATCH } from '../dispatch'
+
 
 const STATE:any = {}
 
@@ -15,21 +16,29 @@ export default class Store extends Meta{
          STATE[this.constructor.name] = []
       }
    }
+
+   protected STATE_DATA = () => STATE[this.constructor.name]
    
    protected addDispatch(){
-      if(Stock.currentToken && !this.dispatchable.includes(Stock.currentToken)){
-         this.dispatchable.push(Stock.currentToken)
+      const active = Stack.getActive()
+      if(active && !this.dispatchable.includes(active)){
+         this.dispatchable.push(active)
       }
    }
 
    protected dispatch(){
       if(!DISPATCH.noDispatch){
-         for(let token of this.dispatchable){
-            Stock.dispatch(token)
+         for(let i = 0; i < this.dispatchable.length; i++){
+            const id = this.dispatchable[i]
+            const item = Stack.findById(id)
+            if(item){
+               item.dispatch(Math.random())
+            }else{
+               this.dispatchable.splice(i, 1)         
+            }
          }
       }
    }
-   
    
    protected makeRow(row: any){
       const _id      = row._id || '_'+uid()
@@ -38,7 +47,7 @@ export default class Store extends Meta{
       return {...row,_id,observe: now}
    }
 
-   observe(){
+   observe(): number{
       return this._observe
    }
    
@@ -53,6 +62,9 @@ export default class Store extends Meta{
    }
    
    insert(row: object){
+      if((row as any)?._id){
+         delete (row as any)._id
+      }
       row = this.makeRow(row)
       STATE[this.constructor.name].push(row)
       if(typeof (this as any).onUpdate == 'function'){
@@ -62,12 +74,14 @@ export default class Store extends Meta{
       return row
    }
    
-   insertMany(rows: any[]){
-      const rows_ids = []
-
+   insertMany(rows: object[]): string[]{
+      const rows_ids: string[] = []
       for(let row of rows){
-         row = this.makeRow(row)
-         rows_ids.push(row._id)
+         if((row as any)?._id){
+            delete (row as any)._id
+         }
+         const format = this.makeRow(row)
+         rows_ids.push(format._id || '')
          STATE[this.constructor.name].push(row)
       }
       if(typeof (this as any).onUpdate == 'function'){
@@ -81,6 +95,9 @@ export default class Store extends Meta{
       if(!is_object(row) || !is_number(index)){
          throw new Error("Row and index required!")
       }
+      if((row as any)?._id){
+         delete (row as any)._id
+      }
       row = this.makeRow(row)
       STATE[this.constructor.name].splice(parseInt(index), 0, row)
       if(typeof (this as any).onUpdate == 'function'){
@@ -90,32 +107,28 @@ export default class Store extends Meta{
       return row
    }
    
-   update(row: object, where?: string | object | number, callback?: Function | any){
-
+   update(row: object, where?: string | object | number, callback?: Function | any): void{
       if(is_string(where)){
          where = {_id: where}
       }
-
-      const exists = this.find(where)
-      if(!exists.length){
-         return
-      }
-
-      this.query(where, (prevRow: object) => {
-         if(is_callable(callback)){
-            prevRow = callback(prevRow)
+      const exists = this.query(where) || []
+      if(exists.length){
+         this.query(where, (prevRow: object) => {
+            if(is_callable(callback)){
+               prevRow = callback(prevRow)
+            }
+            const formate = this.makeRow(prevRow)
+            return {...formate, ...row, _id: formate._id}
+         })
+   
+         if(typeof (this as any).onUpdate == 'function'){
+            (this as any).onUpdate('update')
          }
-         const formate = this.makeRow(prevRow)
-         return {...formate, ...row, _id: formate._id}
-      })
-
-      if(typeof (this as any).onUpdate == 'function'){
-         (this as any).onUpdate('update')
+         this.dispatch()
       }
-      this.dispatch()
    }
 
-   updateAll(row: object, callback?: Function | any){
+   updateAll(row: object, callback?: Function | any): void{
 
       this.query(null, (prevRow: object) => {
          if(is_callable(callback)){
@@ -131,11 +144,11 @@ export default class Store extends Meta{
       this.dispatch()
    }
    
-   delete(where?: string | object | number){
+   delete(where?: string | object | number): void{
       if(is_string(where)){
          where = {_id: where}
       }
-      const exists = this.find(where)
+      const exists = this.query(where) || []
       if(!exists.length){
          return
       }
@@ -146,11 +159,10 @@ export default class Store extends Meta{
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('delete')
       }
-
       this.dispatch()
    }
 
-   deleteAll(){
+   deleteAll(): void{
       this._observe   = Date.now()
       STATE[this.constructor.name] = []
       if(typeof (this as any).onUpdate == 'function'){
@@ -159,11 +171,11 @@ export default class Store extends Meta{
       this.dispatch()
    }
 
-   deleteColumns(cols: string[], where?: string | object | number, callback?: Function | any){
+   deleteColumns(cols: string[], where?: string | object | number, callback?: Function | any): void{
       if(is_string(where)){
          where = {_id: where}
       }
-      const exists = this.find(where)
+      const exists = this.query(where) || []
       if(!exists.length){
          return
       }
@@ -192,32 +204,25 @@ export default class Store extends Meta{
       this.dispatch()
    }
    
-   count(where?: string | object | number){
-      this.addDispatch()
-      if(where){
-         return this.find(where).length
-      }
-      return this.getData().length
+   count(where?: string | object | number): number{
+      return where ? this.find(where).length : this.getData().length
    }
    
-   find(where?: string | object | number){
+   find(where?: string | object | number): any[]{
       this.addDispatch()
       return this.query(where) || []
    }
 
-   findFirst(where?: string | object | number){
+   findFirst(where?: string | object | number) {
       this.addDispatch()
       const ex = this.find(where)
-      if(ex.length){
-         return ex[0]
-      }
+      return ex.length ? ex[0] : false
    }
+
    findById(_id: string){
       this.addDispatch()
       const ex = this.find({_id})
-      if(ex.length){
-         return ex[0]
-      }
+      return ex.length ? ex[0] : false
    }
 
    findAll(){
@@ -242,11 +247,12 @@ export default class Store extends Meta{
    }
    
    getIndex(id: string){
-      if(!id) return;
-      this.addDispatch()
-      const data:any = this.queryNodes(id)
-      if(data && data.length){
-         return data[0].path[1]
+      if(id){
+         this.addDispatch()
+         const data:any = this.queryNodes(id)
+         if(data?.length){
+            return data[0].path[1]
+         }
       }
    }
 }

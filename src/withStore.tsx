@@ -1,8 +1,15 @@
-import {useMemo, createElement} from 'react'
+import {useMemo, useState, useEffect, createElement} from 'react'
 import {is_array} from './utils'
+import Stack from './core/Stack'
 
-const withMemo = (Comp: any, resolve?: Function) => {
+const withStore = (Comp: any, resolve?: Function) => {
+   
    return (props?: any) => {
+      const [,dispatch] = useState()
+      const id = useMemo(() => Stack.create({dispatch}), [])
+      // eslint-disable-next-line
+      useEffect(() => () => Stack.delete(id), [])
+
       if(typeof resolve === 'function'){
          let deps  = resolve(props)
          let compare:any = []
@@ -12,11 +19,11 @@ const withMemo = (Comp: any, resolve?: Function) => {
             deps      = deps ? deps : props
             compare   = Object.values(deps)
          }
-         // eslint-disable-next-line 
+         // eslint-disable-next-line
          return useMemo(() => createElement(Comp, props), compare)
       }
       return createElement(Comp, props)
    }
 }
 
-export default withMemo
+export default withStore

@@ -1,4 +1,4 @@
-import Store from './Store'
+import Store from './core'
 import withMemo from './withMemo'
 import withStore from './withStore'
 import useMeta from './useMeta'

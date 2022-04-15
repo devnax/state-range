@@ -1,8 +1,10 @@
 import {Store} from '../../../.'
 
+
 class Todo extends Store {
-   constructor(){
-      super()
+
+   create(title: string){
+      this.insert({title})
    }
 }
 

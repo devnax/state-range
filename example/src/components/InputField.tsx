@@ -7,11 +7,10 @@ import {withStore, Store} from '../../../.'
 
 
 
-
-const InputField = () => {
-   const title = Todo.getMeta("title", '')
-   const editId = Todo.getMeta("edit")
-   console.log("Input Field")
+const InputField = (props) => {
+   const title    = Todo.getMeta("title", '')
+   const editId   = Todo.getMeta("edit")
+   // console.log("Input Field")
    return (
       <Stack direction='row' spacing={1}>
          <Box flex={1}>
@@ -30,7 +29,8 @@ const InputField = () => {
                editId ? <IconButton  onClick={() => {
                   if(title){
                      Todo.update({
-                        title: Todo.getMeta("title")
+                        title: Todo.getMeta("title"),
+                        type: "Nothing"
                      }, editId)
                   }
                   
@@ -50,7 +50,6 @@ const InputField = () => {
                <AddIcon />
             </IconButton>
             }
-            
             
          </Box>
       </Stack>
