@@ -31,11 +31,13 @@ export default class Store extends Meta{
          for(let i = 0; i < this.dispatchable.length; i++){
             const id = this.dispatchable[i]
             const item = Stack.findById(id)
-            if(item){
-               item.dispatch(Math.random())
-            }else{
-               this.dispatchable.splice(i, 1)         
+            if(!item){
+               this.dispatchable.splice(i, 1)      
             }
+         }
+         for(let id of this.dispatchable){
+            const item = Stack.findById(id)
+            item?.dispatch(Math.random())
          }
       }
    }
