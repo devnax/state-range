@@ -3,12 +3,16 @@ import {is_array} from './utils'
 import Stack from './core/Stack'
 
 const withStore = (Comp: any, resolve?: Function) => {
-   
+  
    return (props?: any) => {
       const [,dispatch] = useState()
       const id = useMemo(() => Stack.create({dispatch}), [])
-      // eslint-disable-next-line
-      useEffect(() => () => Stack.delete(id), [])
+ 
+      useEffect(() => {
+         Stack.deactiveAll()
+         return () => Stack.delete(id)
+         // eslint-disable-next-line
+      }, [])
 
       if(typeof resolve === 'function'){
          let deps  = resolve(props)

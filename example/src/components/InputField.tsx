@@ -11,6 +11,7 @@ const InputField = (props) => {
    const title    = Todo.getMeta("title", '')
    const editId   = Todo.getMeta("edit")
    // console.log("Input Field")
+   
    return (
       <Stack direction='row' spacing={1}>
          <Box flex={1}>

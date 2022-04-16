@@ -16,7 +16,7 @@ const _First = () => {
 
 const First = withStore(_First)
 
-const View = () => {
+const TabView = () => {
    const value    = Todo.getMeta("tab_value", 'Second')
    const todos    = Todo.findAll()
    
@@ -42,4 +42,4 @@ const View = () => {
    )
 }
 
-export default withStore(View)
+export default withStore(TabView)

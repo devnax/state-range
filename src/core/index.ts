@@ -37,6 +37,8 @@ export default class Store extends Meta{
          }
          for(let id of this.dispatchable){
             const item = Stack.findById(id)
+            console.log(item);
+            
             item?.dispatch(Math.random())
          }
       }

@@ -3,16 +3,14 @@ import {uid} from '../utils'
 
 
 interface DataProps{
-   id?: string,
-   dispatch: Function,
-   active?: boolean
+   id?: string;
+   dispatch: Function;
+   active?: boolean;
 }
 
 class Stack extends Query{
 
-   STATE: object[] = []
-   token: string | null = null
-
+   STATE: object[]      = []
    protected STATE_DATA = () => this.STATE
 
    protected format(data: DataProps){
@@ -20,6 +18,10 @@ class Stack extends Query{
       return {...data, id}
    }
 
+   deactiveAll(){
+      this.update({active:false}, {active: true})
+   }
+   
    getActive(){
       const ex = this.query({active: true}) || []
       return ex.length ? ex[0].id : null
@@ -27,9 +29,9 @@ class Stack extends Query{
 
    create(data: DataProps): string{
       const formated = this.format(data)
-      this.update({active:false}, {active: true})
+      this.deactiveAll()
       this.STATE.push({...formated, active: true})
-      return formated.id || ''
+      return formated.id
    }
 
    update(data: Partial<DataProps>, where: object){
