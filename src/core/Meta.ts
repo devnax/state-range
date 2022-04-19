@@ -12,7 +12,7 @@ export default class Meta extends Query{
 
    protected META_DATA = () => META[this.constructor.name]
 
-   setMeta(meta_key: string | number, meta_value: any){
+   setMeta(meta_key: string, meta_value: any){
       const exists = this.metaQuery({meta_key})
 
       if(exists.length){
@@ -34,7 +34,7 @@ export default class Meta extends Query{
       (this as any).dispatch()
    }
 
-   getMeta(meta_key: string | number, def?: any){
+   getMeta(meta_key: string, def?: any){
       (this as any).addDispatch()
       const exists = this.metaQuery({meta_key})
       if(exists.length){
@@ -44,7 +44,7 @@ export default class Meta extends Query{
       }
    }
 
-   useMeta(meta_key: string | number, def?: object): [any, (newdata: object) => any]{
+   useMeta(meta_key: string, def?: any): [any, (newdata: any) => any]{
       const data = this.getMeta(meta_key, def)
       const observe = this.observeMeta(meta_key)
       return [{...data, observe}, (newdata: any) => this.setMeta(meta_key, {...data, ...newdata})]
@@ -55,7 +55,7 @@ export default class Meta extends Query{
       return META[this.constructor.name]
    }
 
-   deleteMeta(meta_key: string | number){
+   deleteMeta(meta_key: string){
       (this as any)._observe   = Date.now()
       this.metaQuery({meta_key}, () => null)
       META[this.constructor.name] = this.metaQuery('@')
@@ -74,7 +74,7 @@ export default class Meta extends Query{
       (this as any).dispatch()
    }
 
-   getMetaInfo(meta_key: string | number, def?: object){
+   getMetaInfo(meta_key: string, def?: object){
       (this as any).addDispatch()
       const exists = this.metaQuery({meta_key})
       if(exists.length){
@@ -84,7 +84,7 @@ export default class Meta extends Query{
       }
    }
 
-   observeMeta(meta_key: string | number): number{
+   observeMeta(meta_key: string): number{
       const meta = this.getMetaInfo(meta_key)
       return meta ? meta.observe : 0
    }
