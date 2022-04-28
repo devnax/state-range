@@ -3,6 +3,7 @@ import {uid, is_object, is_number, is_callable, is_string} from '../utils'
 import Meta from './Meta'
 import { DISPATCH } from '../dispatch'
 
+
 const STATE:any = {}
 
 export default class Store extends Meta{
@@ -26,23 +27,17 @@ export default class Store extends Meta{
    }
 
    protected dispatch(){
-      
       if(!DISPATCH.noDispatch){
-         
-         const trash = []
          for(let i = 0; i < this.dispatchable.length; i++){
-            const id    = this.dispatchable[i]
-            const item  = Stack.findById(id)
-            if(item){
-               item.dispatch()
-            }else{
-               trash.push(i)
+            const id = this.dispatchable[i]
+            const item = Stack.findById(id)
+            if(!item){
+               this.dispatchable.splice(i, 1)      
             }
          }
-         
-         
-         for(let index of trash){
-            this.dispatchable.splice(index, 1)
+         for(let id of this.dispatchable){
+            const item = Stack.findById(id)
+            item?.dispatch(Math.random())
          }
       }
    }
@@ -233,21 +228,8 @@ export default class Store extends Meta{
    }
 
    findAll(){
+      this.addDispatch()
       return this.getData()
-   }
-
-   rows(){
-      return this.getData()
-   }
-
-   getLastRow(){
-      const rows = this.rows()
-      return rows.length ? rows[rows.length -1] : null
-   }
-
-   getFirstRow(){
-      const rows = this.rows()
-      return rows.length ? rows[0] : null
    }
    
    move(oldIdx: any, newIdx: number){

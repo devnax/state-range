@@ -1,22 +1,17 @@
-import {useMemo, createElement} from 'react'
-import {is_array} from './utils'
+import {useMemo, createElement, ComponentType} from 'react'
 
-const withMemo = (Comp: any, resolve?: Function) => {
-   return (props?: any) => {
-      if(typeof resolve === 'function'){
-         let deps  = resolve(props)
-         let compare:any = []
-         if(is_array(deps)){
-            compare   = deps
-         }else{
-            deps      = deps ? deps : props
-            compare   = Object.values(deps)
-         }
+type Resolver = (props: object) => any[]
+
+const withMemo = (Comp: ComponentType, resolve?: Resolver) => {
+   const Render = (props?: any) => {
+      if(resolve){
+         let compare  = resolve(props)
          // eslint-disable-next-line 
          return useMemo(() => createElement(Comp, props), compare)
       }
       return createElement(Comp, props)
    }
+   return Render
 }
 
 export default withMemo

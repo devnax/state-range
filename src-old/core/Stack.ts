@@ -1,8 +1,9 @@
 import Query from './Query'
+import {uid} from '../utils'
 
 
 interface DataProps{
-   id: string;
+   id?: string;
    dispatch: Function;
    active?: boolean;
 }
@@ -10,7 +11,12 @@ interface DataProps{
 class Stack extends Query{
 
    STATE: object[]      = []
-   STATE_DATA = () => this.STATE
+   protected STATE_DATA = () => this.STATE
+
+   protected format(data: DataProps){
+      const id      = data.id || uid()
+      return {...data, id}
+   }
 
    deactiveAll(){
       this.update({active:false}, {active: true})
@@ -21,16 +27,17 @@ class Stack extends Query{
       return ex.length ? ex[0].id : null
    }
 
-   create(data: DataProps){
-      const exists = this.query({id: data.id})
-      exists.length && this.delete(data.id)
+   create(data: DataProps): string{
+      const formated = this.format(data)
       this.deactiveAll()
-      this.STATE.push({...data, active: true})
+      this.STATE.push({...formated, active: true})
+      return formated.id
    }
 
    update(data: Partial<DataProps>, where: object){
       this.query(where, (prevRow: DataProps) => {
-         return {...prevRow, ...data, id: prevRow.id}
+         const formate = this.format(prevRow)
+         return {...formate, ...data, id: formate.id}
       })
    }
 
@@ -44,6 +51,5 @@ class Stack extends Query{
       return ex.length ? ex[0] : null
    }
 }
-
 
 export default new Stack()
