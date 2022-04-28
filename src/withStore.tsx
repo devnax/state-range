@@ -1,4 +1,4 @@
-import React, {useId, useMemo, useState, createElement, ComponentType} from 'react'
+import React, {ComponentType, useId, useMemo, useState} from 'react'
 import Stack from './core/Stack'
 
 interface Props{
@@ -7,7 +7,7 @@ interface Props{
    dispatch: Function;
 }
 
-class C extends React.Component<Props>{
+class Block extends React.Component<Props>{
 
    constructor(props: Props){
       super(props)
@@ -24,11 +24,11 @@ class C extends React.Component<Props>{
 }
 
 
-type Resolver = (props: object) => any[]
+type Resolver<T> = (props: T) => any[]
 
-const withStore = (Comp: ComponentType, resolve?: Resolver) => {
+const withStore = <T, >(Comp: ComponentType<T>, resolve?: Resolver<T>) => {
    
-   const Render = (props?: any) => {
+   const Render = (props: any) => {
       const id = useId()
       const [,dispatch] = useState(0)
       
@@ -38,10 +38,9 @@ const withStore = (Comp: ComponentType, resolve?: Resolver) => {
       
          let compare  = resolve(props)
          // eslint-disable-next-line
-         return useMemo(() => createElement(C, {dispatch: _up, id}, createElement(Comp, props)), compare)
+         return useMemo(() => <Block id={id} dispatch={_up}><Comp {...props}/></Block>, compare)
       }
-      
-      return createElement(C, {dispatch: _up, id}, createElement(Comp, props))
+      return <Block id={id} dispatch={_up}><Comp {...props}/></Block>
    }
 
    return Render

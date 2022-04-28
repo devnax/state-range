@@ -1,9 +1,9 @@
 import {useMemo, createElement, ComponentType} from 'react'
 
-type Resolver = (props: object) => any[]
+type Resolver<T> = (props: T) => any[]
 
-const withMemo = (Comp: ComponentType, resolve?: Resolver) => {
-   const Render = (props?: any) => {
+const withMemo = <T, >(Comp: ComponentType<T>, resolve?: Resolver<T>) => {
+   const Render = (props: any) => {
       if(resolve){
          let compare  = resolve(props)
          // eslint-disable-next-line 
