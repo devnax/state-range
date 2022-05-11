@@ -10,7 +10,6 @@ interface DataProps{
 class Stack extends Query{
 
    STATE: object[]      = []
-   STATE_DATA = () => this.STATE
 
    deactiveAll(){
       this.update({active:false}, {active: true})

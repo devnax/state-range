@@ -12,7 +12,7 @@ export default () => {
    return (
       <Container maxWidth="sm" sx={{bgcolor: "#f7f8f9", borderRadius: 2, p: 1}}>
         <InputField />
-        <List />  
+        <List name="nax"/>  
         {/* <Tabs />   */}
       </Container>
    )

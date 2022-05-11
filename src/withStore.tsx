@@ -26,9 +26,9 @@ class Block extends React.Component<Props>{
 
 type Resolver<T> = (props: T) => any[]
 
-const withStore = <T, >(Comp: ComponentType<T>, resolve?: Resolver<T>) => {
+const withStore = <T, R extends Resolver<T>>(Comp: ComponentType<T>, resolve?: R) => {
    
-   const Render = (props: any) => {
+   const Render = <P extends T>(props: P) => {
       const id = useId()
       const [,dispatch] = useState(0)
       

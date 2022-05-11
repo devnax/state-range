@@ -3,20 +3,11 @@ import {uid, is_object, is_number, is_callable, is_string} from '../utils'
 import Meta from './Meta'
 import { DISPATCH } from '../dispatch'
 
-const STATE:any = {}
-
 export default class Store extends Meta{
    private dispatchable:any      = []
    private _observe              = 0
+   protected STATE: object[]     = []
    
-   constructor(){
-      super()
-      if(!STATE.hasOwnProperty(this.constructor.name)){
-         STATE[this.constructor.name] = []
-      }
-   }
-
-   protected STATE_DATA = () => STATE[this.constructor.name]
    
    protected addDispatch(){
       const active = Stack.getActive()
@@ -26,9 +17,7 @@ export default class Store extends Meta{
    }
 
    protected dispatch(){
-      
       if(!DISPATCH.noDispatch){
-         
          const trash = []
          for(let i = 0; i < this.dispatchable.length; i++){
             const id    = this.dispatchable[i]
@@ -39,7 +28,6 @@ export default class Store extends Meta{
                trash.push(i)
             }
          }
-         
          
          for(let index of trash){
             this.dispatchable.splice(index, 1)
@@ -60,12 +48,7 @@ export default class Store extends Meta{
    
    getState(){
       this.addDispatch()
-      return STATE
-   }
-   
-   getData(){
-      this.addDispatch()
-      return STATE[this.constructor.name]
+      return this.STATE
    }
    
    insert(row: object){
@@ -73,7 +56,7 @@ export default class Store extends Meta{
          delete (row as any)._id
       }
       row = this.makeRow(row)
-      STATE[this.constructor.name].push(row)
+      this.STATE.push(row)
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('insert')
       }
@@ -89,7 +72,7 @@ export default class Store extends Meta{
          }
          const format = this.makeRow(row)
          rows_ids.push(format._id || '')
-         STATE[this.constructor.name].push(row)
+         this.STATE.push(row)
       }
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('insertMany')
@@ -106,7 +89,7 @@ export default class Store extends Meta{
          delete (row as any)._id
       }
       row = this.makeRow(row)
-      STATE[this.constructor.name].splice(parseInt(index), 0, row)
+      this.STATE.splice(parseInt(index), 0, row)
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('insertAfter')
       }
@@ -162,7 +145,7 @@ export default class Store extends Meta{
       
       this._observe   = Date.now()
       this.query(where, () => null)
-      STATE[this.constructor.name] = this.query('@')
+      this.STATE = this.query('@')
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('delete')
       }
@@ -171,7 +154,7 @@ export default class Store extends Meta{
 
    deleteAll(): void{
       this._observe   = Date.now()
-      STATE[this.constructor.name] = []
+      this.STATE = []
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('delete')
       }
@@ -212,7 +195,7 @@ export default class Store extends Meta{
    }
    
    count(where?: string | object | number): number{
-      return where ? this.find(where).length : this.getData().length
+      return where ? this.find(where).length : this.getState().length
    }
    
    find(where?: string | object | number): any[]{
@@ -233,11 +216,11 @@ export default class Store extends Meta{
    }
 
    findAll(){
-      return this.getData()
+      return this.getState()
    }
 
    rows(){
-      return this.getData()
+      return this.getState()
    }
 
    getLastRow(){
@@ -255,10 +238,10 @@ export default class Store extends Meta{
          throw new Error("olb Index and New Index must be number");
       }
       
-      const row = STATE[this.constructor.name][oldIdx]
+      const row = this.STATE[oldIdx]
       if(row){
-         STATE[this.constructor.name].splice(oldIdx, 1)
-         STATE[this.constructor.name].splice(newIdx, 0, this.makeRow(row))
+         this.STATE.splice(oldIdx, 1)
+         this.STATE.splice(newIdx, 0, this.makeRow(row))
          if(typeof (this as any).onUpdate == 'function'){
             (this as any).onUpdate('move')
          }

@@ -39,7 +39,7 @@ export default class Query{
     }
 
     query(jpQuery: any, cb?: any){
-        const state = (this as any).STATE_DATA()
+        const state = (this as any).STATE
         try{
             let result: any = false
             if(is_callable(cb)){
@@ -60,7 +60,7 @@ export default class Query{
     }
 
     metaQuery(jpQuery: any, cb?: any){
-        const state = (this as any).META_DATA()
+        const state = (this as any).META_STATE
         try{
             let result: any = false
             if(is_callable(cb)){
@@ -81,7 +81,7 @@ export default class Query{
     }
 
     queryNodes(jpQuery: any){
-        const state = (this as any).STATE_DATA()
+        const state = (this as any).STATE
         try{
             const result:any = jpath.nodes(
                 state, 
