@@ -1,7 +1,5 @@
 import Query from './Query'
 
-// const META:any = {}
-
 export default class Meta extends Query{
    
    protected META_STATE: object[] = []

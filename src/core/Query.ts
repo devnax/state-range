@@ -1,13 +1,13 @@
-import { is_callable, is_number, is_object, is_string } from "../utils";
+import { is_object } from "../utils";
 import jpath from 'jsonpath'
 
 export default class Query{
 
     private expression(ex: any){
         let _q
-        if(is_number(ex)){
+        if(typeof ex === 'number'){
             _q = `$[${ex}]` // with index
-        }else if(is_string(ex)){
+        }else if(typeof ex === 'string'){
             // ID
             if(ex.charAt(0) === '_'){
                 _q = `$[?(@._id=='${ex}')]`
@@ -21,7 +21,7 @@ export default class Query{
             let fex = ''// formate
             for(let k in ex){
                 let v = ex[k]
-                if(is_string(ex[k])){
+                if(typeof ex[k] === 'string'){
                     v = `'${ex[k]}'`
                 }
                 fex += `${_and}@.${k}==${v}`
@@ -42,7 +42,7 @@ export default class Query{
         const state = (this as any).STATE
         try{
             let result: any = false
-            if(is_callable(cb)){
+            if(typeof cb === 'function'){
                 result = jpath.apply(
                     state, 
                     this.expression(jpQuery),
@@ -63,7 +63,7 @@ export default class Query{
         const state = (this as any).META_STATE
         try{
             let result: any = false
-            if(is_callable(cb)){
+            if(typeof cb === 'function'){
                 result = jpath.apply(
                     state, 
                     this.expression(jpQuery),

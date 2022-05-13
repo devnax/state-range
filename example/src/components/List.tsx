@@ -10,17 +10,13 @@ import ModeEditIcon from '@mui/icons-material/ModeEdit';
 import {withStore} from '../../../.'
 import Todo from '../models/Todo'
 
-interface Props{
-  name: string
-}
 
-const UIList = ({name}: Props) => {
+const UIList = () => {
   const todos = Todo.find()
   // console.log("List")
   
   return (
     <List sx={{ width: '100%', mt: 2,bgcolor: 'background.paper' }}>
-      {name}
       {todos.map(({title, _id}, idx) => {
 
         return (

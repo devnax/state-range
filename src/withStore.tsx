@@ -11,7 +11,7 @@ class Block extends React.Component<Props>{
 
    constructor(props: Props){
       super(props)
-      Stack.create({dispatch: props.dispatch, id: props.id})
+      Stack.currentItem = {id: props.id, dispatch: props.dispatch}
    }
 
    componentWillUnmount(){
@@ -29,18 +29,16 @@ type Resolver<T> = (props: T) => any[]
 const withStore = <T, R extends Resolver<T>>(Comp: ComponentType<T>, resolve?: R) => {
    
    const Render = <P extends T>(props: P) => {
-      const id = useId()
-      const [,dispatch] = useState(0)
-      
-      const _up = () => dispatch(Math.random())
+      const id           = useId()
+      const [, dispatch] = useState(0)
+      const _up          = () => dispatch(Math.random())
       
       if(typeof resolve === 'function'){
-      
          let compare  = resolve(props)
          // eslint-disable-next-line
-         return useMemo(() => <Block id={id} dispatch={_up}><Comp {...props}/></Block>, compare)
+         return useMemo(() => <Block id={id} dispatch={_up}><Comp  {...props} /></Block>, compare)
       }
-      return <Block id={id} dispatch={_up}><Comp {...props}/></Block>
+      return <Block id={id} dispatch={_up}><Comp  {...props}/></Block>
    }
 
    return Render
