@@ -1,45 +1,55 @@
 import Query from './Query'
 
-
-interface DataProps{
+interface DataProps {
    id: string;
    dispatch: Function;
    active?: boolean;
+   stores?: any[]
 }
 
-class Stack extends Query{
+interface CurrentItem {
+   dispatch: Function;
+   id: string
+}
 
-   STATE: object[]      = []
+class Stack extends Query {
 
-   deactiveAll(){
-      this.update({active:false}, {active: true})
-   }
+   STATE: object[] = []
+   currentItem: CurrentItem | null = null
    
-   getActive(){
-      const ex = this.query({active: true}) || []
-      return ex.length ? ex[0].id : null
+   
+   dispatch(storeId: string) {
+      const items = this.query({ storeId })
+      for (let item of items) {
+         if(typeof item.dispatch !== undefined){
+            item.dispatch()
+         }
+      }
    }
 
-   create(data: DataProps){
-      const exists = this.query({id: data.id})
-      exists.length && this.delete(data.id)
-      this.deactiveAll()
-      this.STATE.push({...data, active: true})
+   create(storeId: string) {
+      const exists = this.query({ storeId, id: this.currentItem?.id }) || []
+      if (this.currentItem && !exists.length) {
+         this.STATE.push({ ...this.currentItem, storeId })
+      }
    }
 
-   update(data: Partial<DataProps>, where: object){
+   update(data: Partial<DataProps>, where: object) {
       this.query(where, (prevRow: DataProps) => {
-         return {...prevRow, ...data, id: prevRow.id}
+         return { ...prevRow, ...data, id: prevRow.id }
       })
    }
 
-   delete(id: string){
-      this.query({id}, () => null)
+   delete(where: string | object) {
+      if (typeof where === 'string') {
+         where = { id: where }
+      }
+      this.query(where, () => null)
       this.STATE = this.query('@')
    }
 
-   findById(id: string){
-      const ex = this.query({id}) || []
+   findById(id: string) {
+      const ex = this.query({ id }) || []
       return ex.length ? ex[0] : null
    }
 }

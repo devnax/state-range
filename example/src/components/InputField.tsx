@@ -3,11 +3,11 @@ import * as React from 'react';
 import AddIcon from '@mui/icons-material/Add';
 import ModeEditIcon from '@mui/icons-material/ModeEdit';
 import Todo from '../models/Todo'
-import {withStore, Store} from '../../../.' 
+import {withStore, Store, noDispatch, dispatch} from '../../../.' 
 
 
 
-const InputField = (props) => {
+const InputField = () => {
    const title    = Todo.getMeta("title", '')
    const editId   = Todo.getMeta("edit")
    // console.log("Input Field")
@@ -28,25 +28,30 @@ const InputField = (props) => {
 
             {
                editId ? <IconButton  onClick={() => {
-                  if(title){
-                     Todo.update({
-                        title: Todo.getMeta("title"),
-                        type: "Nothing"
-                     }, editId)
-                  }
-                  
-                  Todo.deleteMeta('title')
-                  Todo.deleteMeta('edit')
+                  dispatch(() => {
+                     if(title){
+                        Todo.update({
+                           title: Todo.getMeta("title"),
+                           type: "Nothing"
+                        }, editId)
+                     }
+                     
+                     Todo.deleteMeta('title')
+                     Todo.deleteMeta('edit')
+                  })
                }}>
                   <ModeEditIcon />
                </IconButton> : <IconButton  onClick={() => {
-               if(title){
-                  Todo.insert({
-                     title: Todo.getMeta("title")
-                  })
-               }
                
-               Todo.deleteMeta('title')
+
+               dispatch(() => {
+                  if(title){
+                     Todo.insert({
+                        title: Todo.getMeta("title")
+                     })
+                  }
+                  Todo.deleteMeta('title')
+               })
             }}>
                <AddIcon />
             </IconButton>

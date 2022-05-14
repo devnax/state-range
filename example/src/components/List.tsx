@@ -7,20 +7,16 @@ import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ModeEditIcon from '@mui/icons-material/ModeEdit';
 
-import {withStore} from '../../../.'
+import {dispatch, withStore} from '../../../.'
 import Todo from '../models/Todo'
 
-interface Props{
-  name: string
-}
 
-const UIList = ({name}: Props) => {
+const UIList = () => {
   const todos = Todo.find()
   // console.log("List")
   
   return (
     <List sx={{ width: '100%', mt: 2,bgcolor: 'background.paper' }}>
-      {name}
       {todos.map(({title, _id}, idx) => {
 
         return (
@@ -29,8 +25,10 @@ const UIList = ({name}: Props) => {
             secondaryAction={
               <>
                 <IconButton  onClick={() => {
-                  Todo.setMeta('title', title)
-                  Todo.setMeta('edit', _id)
+                  dispatch(() => {
+                    Todo.setMeta('title', title)
+                    Todo.setMeta('edit', _id)
+                  })
                 }}>
                   <ModeEditIcon />
                 </IconButton>

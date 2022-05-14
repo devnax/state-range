@@ -1,40 +1,18 @@
 import Stack from './Stack'
-import {uid, is_object, is_number, is_callable, is_string} from '../utils'
+import {uid} from '../utils'
 import Meta from './Meta'
 import { DISPATCH } from '../dispatch'
 
 export default class Store extends Meta{
-   private dispatchable:any      = []
    private _observe              = 0
    protected STATE: object[]     = []
+   private storeId               = uid()
    
    
    protected addDispatch(){
-      const active = Stack.getActive()
-      if(active && !this.dispatchable.includes(active)){
-         this.dispatchable.push(active)
-      }
+      Stack.create(this.storeId)
    }
 
-   protected dispatch(){
-      if(!DISPATCH.noDispatch){
-         const trash = []
-         for(let i = 0; i < this.dispatchable.length; i++){
-            const id    = this.dispatchable[i]
-            const item  = Stack.findById(id)
-            if(item){
-               item.dispatch()
-            }else{
-               trash.push(i)
-            }
-         }
-         
-         for(let index of trash){
-            this.dispatchable.splice(index, 1)
-         }
-      }
-   }
-   
    protected makeRow(row: any){
       const _id      = row._id || '_'+uid()
       const now      = Date.now()
@@ -42,6 +20,17 @@ export default class Store extends Meta{
       return {...row,_id,observe: now}
    }
 
+   dispatch(){
+      if(!DISPATCH.noDispatch){
+         if(DISPATCH.onDispatch){
+            const id = this.storeId
+            DISPATCH.onDispatchModules = {...DISPATCH.onDispatchModules, [id]: this.dispatch.bind(this)}
+         }else{
+            Stack.dispatch(this.storeId)
+         }
+      }
+   }
+   
    observe(): number{
       return this._observe
    }
@@ -81,15 +70,12 @@ export default class Store extends Meta{
       return rows_ids
    }
    
-   insertAfter(row: object, index: any){
-      if(!is_object(row) || !is_number(index)){
-         throw new Error("Row and index required!")
-      }
+   insertAfter(row: object, index: number){
       if((row as any)?._id){
          delete (row as any)._id
       }
       row = this.makeRow(row)
-      this.STATE.splice(parseInt(index), 0, row)
+      this.STATE.splice(index, 0, row)
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('insertAfter')
       }
@@ -97,14 +83,14 @@ export default class Store extends Meta{
       return row
    }
    
-   update(row: object, where?: string | object | number, callback?: Function | any): void{
-      if(is_string(where)){
+   update(row: object, where?: string | object | number, callback?: (r: object) => object): void{
+      if(typeof where === 'string'){
          where = {_id: where}
       }
       const exists = this.query(where) || []
       if(exists.length){
          this.query(where, (prevRow: object) => {
-            if(is_callable(callback)){
+            if(typeof callback === 'function'){
                prevRow = callback(prevRow)
             }
             const formate = this.makeRow(prevRow)
@@ -118,10 +104,16 @@ export default class Store extends Meta{
       }
    }
 
-   updateAll(row: object, callback?: Function | any): void{
+   updateFirst(row: object, where?: string | object | number, callback?: (r: object) => object){
+      const exists = this.query(where) || []
+      if(exists.length){
+         this.update(row, exists[0]._id, callback)
+      }
+   }
 
+   updateAll(row: object, callback?: (r: object) => object): void{
       this.query(null, (prevRow: object) => {
-         if(is_callable(callback)){
+         if(typeof callback === 'function'){
             prevRow = callback(prevRow)
          }
          const formate = this.makeRow(prevRow)
@@ -135,7 +127,7 @@ export default class Store extends Meta{
    }
    
    delete(where?: string | object | number): void{
-      if(is_string(where)){
+      if(typeof where === 'string'){
          where = {_id: where}
       }
       const exists = this.query(where) || []
@@ -161,8 +153,8 @@ export default class Store extends Meta{
       this.dispatch()
    }
 
-   deleteColumns(cols: string[], where?: string | object | number, callback?: Function | any): void{
-      if(is_string(where)){
+   deleteColumns(cols: string[], where?: string | object | number, callback?: (r: object) => object): void{
+      if(typeof where === 'string'){
          where = {_id: where}
       }
       const exists = this.query(where) || []
@@ -171,7 +163,7 @@ export default class Store extends Meta{
       }
       
       this.query(where, (prevRow: any) => {
-         if(is_callable(callback)){
+         if(typeof callback === 'function'){
             prevRow = callback(prevRow)
          }
 
@@ -233,10 +225,7 @@ export default class Store extends Meta{
       return rows.length ? rows[0] : null
    }
    
-   move(oldIdx: any, newIdx: number){
-      if(!is_number(oldIdx) || !is_number(newIdx)){
-         throw new Error("olb Index and New Index must be number");
-      }
+   move(oldIdx: number, newIdx: number){
       
       const row = this.STATE[oldIdx]
       if(row){
