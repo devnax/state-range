@@ -1,96 +1,101 @@
-import { is_object } from "../utils";
+import {uid, makeQuery } from "../utils";
 import jpath from 'jsonpath'
+import Stack from './Stack'
+import { DISPATCH } from '../dispatch'
 
-export default class Factory{
+interface StateInterface {
+    data: object[],
+    meta: object[],
+}
+
+export const STATE: { [key: string]: StateInterface } = {}
 
 
-    private expression(ex: any){
-        let _q
-        if(typeof ex === 'number'){
-            _q = `$[${ex}]` // with index
-        }else if(typeof ex === 'string'){
-            // ID
-            if(ex.charAt(0) === '_'){
-                _q = `$[?(@._id=='${ex}')]`
-            }else if(ex.charAt(0) === '@'){
-                _q = `$[?(${ex})]`
-            }else{
-                _q = `$${ex}` // jsonpat expression
-            }
-        }else if(is_object(ex)){
-            let _and = ""
-            let fex = ''// formate
-            for(let k in ex){
-                let v = ex[k]
-                if(typeof ex[k] === 'string'){
-                    v = `'${ex[k]}'`
-                }
-                fex += `${_and}@.${k}==${v}`
-                _and = '&&'
-            }
-            if(fex){
-                _q = `$[?(${fex})]`
-            }else{
-                _q = `$[?(@)]`
-            }
-        }else{
-            _q = `$[?(@)]`
+export default class Factory {
+    protected _observe = 0
+    protected index: number = 0;
+    storeId = () => this.index ? this.constructor.name + this.index : this.constructor.name
+
+    constructor() {
+        while (STATE[this.storeId()]) {
+            this.index += 1
         }
-        return _q
+        STATE[this.storeId()] = {
+            data: [],
+            meta: []
+        }
     }
 
-    query(jpQuery: any, cb?: any){
-        const state = (this as any).dataState()
-        try{
+    protected addDispatch(){
+        Stack.create(this.storeId())
+    }
+  
+     dispatch(){
+        if(!DISPATCH.noDispatch){
+           if(DISPATCH.onDispatch){
+              const id = this.storeId()
+              DISPATCH.onDispatchModules = {...DISPATCH.onDispatchModules, [id]: this.dispatch.bind(this)}
+           }else{
+              Stack.dispatch(this.storeId())
+           }
+        }
+     }
+
+     observe(): number{
+        return this._observe
+     }
+
+    protected makeRow(row: any) {
+        const _id = row._id || '_' + uid()
+        const now = Date.now()
+        this._observe = now
+        return { ...row, _id, observe: now }
+    }
+
+    query(jpQuery: any, cb?: any) {
+        const state = STATE[this.storeId()].data
+        try {
             let result: any = false
-            if(typeof cb === 'function'){
-                result = jpath.apply(
-                    state, 
-                    this.expression(jpQuery),
+            if (typeof cb === 'function') {
+                result = jpath.apply( state, makeQuery(jpQuery),
                     cb)
-            }else{
-                result = jpath.query(
-                    state,
-                    this.expression(jpQuery)
-                )
+            } else {
+                result = jpath.query( state, makeQuery(jpQuery) )
             }
             return result
-        }catch(err){
+        } catch (err) {
             console.error(err)
         }
     }
 
-    metaQuery(jpQuery: any, cb?: any){
-        const state = (this as any).metaState()
-        
-        try{
+    metaQuery(jpQuery: any, cb?: any) {
+        const state = STATE[this.storeId()].meta
+
+        try {
             let result: any = false
-            if(typeof cb === 'function'){
+            if (typeof cb === 'function') {
                 result = jpath.apply(
-                    state, 
-                    this.expression(jpQuery),
+                    state,
+                    makeQuery(jpQuery),
                     cb)
-            }else{
+            } else {
                 result = jpath.query(
                     state,
-                    this.expression(jpQuery)
+                    makeQuery(jpQuery)
                 )
             }
             return result
-        }catch(err){
+        } catch (err) {
             console.error(err)
         }
     }
 
-    queryNodes(jpQuery: any){
-        const state = (this as any).dataState()
-        try{
-            const result:any = jpath.nodes(
-                state, 
-                this.expression(jpQuery)
-            )
+    queryNodes(jpQuery: any) {
+        const state = STATE[this.storeId()].data
+        try {
+            const result: any = jpath.nodes(state, makeQuery(jpQuery) )
             return result
-        }catch(err){
+        } catch (err) {
             console.error(err)
         }
     }

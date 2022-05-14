@@ -1,18 +1,9 @@
 import Factory from './Factory'
-
-export const META_STATE: {[key: string]: object[]}  = {}
+import {STATE} from './Factory'
 
 
 export default class Meta extends Factory{
    
-   constructor(){
-      super()
-      META_STATE[this.constructor.name] = []
-   }
-
-   protected metaState(){
-      return META_STATE[this.constructor.name]
-   }
    
    setMeta(meta_key: string, meta_value: any){
       const exists = this.metaQuery({meta_key})
@@ -27,17 +18,17 @@ export default class Meta extends Factory{
             meta_key,
             meta_value
          })
-         META_STATE[this.constructor.name].push(row)
+         STATE[this.storeId()].meta.push(row)
       }
       
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('addMeta')
       }
-      (this as any).dispatch()
+      this.dispatch()
    }
 
    getMeta(meta_key: string, def?: any){
-      (this as any).addDispatch()
+      this.addDispatch()
       const exists = this.metaQuery({meta_key})
       if(exists.length){
          return exists[0].meta_value
@@ -51,32 +42,32 @@ export default class Meta extends Factory{
       return [data, (newdata: any) => this.setMeta(meta_key, newdata)]
    }
 
-   getMataState(){
-      (this as any).addDispatch()
-      return META_STATE[this.constructor.name]
+   getMataState(): object[]{
+      this.addDispatch()
+      return STATE[this.storeId()].meta
    }
 
    deleteMeta(meta_key: string){
       (this as any)._observe   = Date.now()
       this.metaQuery({meta_key}, () => null)
-      META_STATE[this.constructor.name] = this.metaQuery('@')
+      STATE[this.storeId()].meta = this.metaQuery('@')
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('deleteMeta')
       }
-      (this as any).dispatch()
+      this.dispatch()
    }
 
    deleteAllMeta(){
       (this as any)._observe   = Date.now()
-      META_STATE[this.constructor.name] = []
+      STATE[this.storeId()].meta = []
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('deleteAllMeta')
       }
-      (this as any).dispatch()
+      this.dispatch()
    }
 
    getMetaInfo(meta_key: string, def?: object){
-      (this as any).addDispatch()
+      this.addDispatch()
       const exists = this.metaQuery({meta_key})
       if(exists.length){
          return exists[0]

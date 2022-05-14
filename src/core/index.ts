@@ -1,65 +1,19 @@
-import Stack from './Stack'
-import {uid} from '../utils'
 import Meta from './Meta'
-import { DISPATCH } from '../dispatch'
-
-export const STATE: {[key: string]: object[]}  = {}
+import {STATE} from './Factory'
 
 export default class Store extends Meta{
-   private _observe = 0
-   
-   constructor(){
-      super()
-      if(STATE[this.constructor.name]){
-         throw new Error(`${this.constructor.name} Module Already exists. please choose the diffarent store handler name`)
-      }
-
-      if(!STATE[this.constructor.name]){
-         STATE[this.constructor.name] = []
-      }
-   }
-   
-   protected addDispatch(){
-      Stack.create(this.constructor.name)
-   }
-
-   protected makeRow(row: any){
-      const _id      = row._id || '_'+uid()
-      const now      = Date.now()
-      this._observe   = now
-      return {...row,_id,observe: now}
-   }
-
-   dispatch(){
-      if(!DISPATCH.noDispatch){
-         if(DISPATCH.onDispatch){
-            const id = this.constructor.name
-            DISPATCH.onDispatchModules = {...DISPATCH.onDispatchModules, [id]: this.dispatch.bind(this)}
-         }else{
-            Stack.dispatch(this.constructor.name)
-         }
-      }
-   }
-   
-   observe(): number{
-      return this._observe
-   }
-   
-   protected dataState(){
-      return STATE[this.constructor.name]
-   }
    
    getState(){
       this.addDispatch()
-      return STATE[this.constructor.name]
+      return STATE[this.storeId()].data
    }
    
-   insert(row: object){
+   insert(row: object): object{
       if((row as any)?._id){
          delete (row as any)._id
       }
       row = this.makeRow(row)
-      STATE[this.constructor.name].push(row)
+      STATE[this.storeId()].data.push(row)
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('insert')
       }
@@ -75,7 +29,7 @@ export default class Store extends Meta{
          }
          const format = this.makeRow(row)
          rows_ids.push(format._id || '')
-         STATE[this.constructor.name].push(row)
+         STATE[this.storeId()].data.push(row)
       }
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('insertMany')
@@ -84,12 +38,12 @@ export default class Store extends Meta{
       return rows_ids
    }
    
-   insertAfter(row: object, index: number){
+   insertAfter(row: object, index: number): object{
       if((row as any)?._id){
          delete (row as any)._id
       }
       row = this.makeRow(row)
-      STATE[this.constructor.name].splice(index, 0, row)
+      STATE[this.storeId()].data.splice(index, 0, row)
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('insertAfter')
       }
@@ -151,7 +105,7 @@ export default class Store extends Meta{
       
       this._observe   = Date.now()
       this.query(where, () => null)
-      STATE[this.constructor.name] = this.query('@')
+      STATE[this.storeId()].data = this.query('@')
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('delete')
       }
@@ -160,7 +114,7 @@ export default class Store extends Meta{
 
    deleteAll(): void{
       this._observe   = Date.now()
-      STATE[this.constructor.name] = []
+      STATE[this.storeId()].data = []
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('delete')
       }
@@ -204,47 +158,43 @@ export default class Store extends Meta{
       return where ? this.find(where).length : this.getState().length
    }
    
-   find(where?: string | object | number): any[]{
+   find(where?: string | object | number): object[]{
       this.addDispatch()
       return this.query(where) || []
    }
 
-   findFirst(where?: string | object | number) {
+   findFirst(where?: string | object | number): object | null {
       this.addDispatch()
       const ex = this.find(where)
-      return ex.length ? ex[0] : false
+      return ex.length ? ex[0] : null
    }
 
-   findById(_id: string){
+   findById(_id: string): object | null{
       this.addDispatch()
       const ex = this.find({_id})
-      return ex.length ? ex[0] : false
+      return ex.length ? ex[0] : null
    }
 
-   findAll(){
+   findAll(): object[]{
       return this.getState()
    }
 
-   rows(){
-      return this.getState()
-   }
-
-   getLastRow(){
-      const rows = this.rows()
+   getLastRow(): object | null{
+      const rows = this.findAll()
       return rows.length ? rows[rows.length -1] : null
    }
 
-   getFirstRow(){
-      const rows = this.rows()
+   getFirstRow(): object | null{
+      const rows = this.findAll()
       return rows.length ? rows[0] : null
    }
    
    move(oldIdx: number, newIdx: number){
       
-      const row = STATE[this.constructor.name][oldIdx]
+      const row = STATE[this.storeId()].data[oldIdx]
       if(row){
-         STATE[this.constructor.name].splice(oldIdx, 1)
-         STATE[this.constructor.name].splice(newIdx, 0, this.makeRow(row))
+         STATE[this.storeId()].data.splice(oldIdx, 1)
+         STATE[this.storeId()].data.splice(newIdx, 0, this.makeRow(row))
          if(typeof (this as any).onUpdate == 'function'){
             (this as any).onUpdate('move')
          }
@@ -252,7 +202,7 @@ export default class Store extends Meta{
       }
    }
    
-   getIndex(id: string){
+   getIndex(id: string): number | void{
       if(id){
          this.addDispatch()
          const data:any = this.queryNodes(id)

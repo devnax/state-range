@@ -1,4 +1,6 @@
-import Factory from './Factory'
+import {makeQuery} from '../utils'
+import jpath from 'jsonpath'
+
 
 interface DataProps {
    id: string;
@@ -12,21 +14,35 @@ interface fatchableInterface {
    id: string
 }
 
-class Stack extends Factory {
+class Stack {
 
    STATE: object[] = []
    fatchable: fatchableInterface | null = null
-   
 
-   protected dataState(){
-      return this.STATE
+   query(jpQuery: any, cb?: any) {
+      try {
+         let result: any = false
+         if (typeof cb === 'function') {
+            result = jpath.apply(
+               this.STATE,
+               makeQuery(jpQuery),
+               cb)
+         } else {
+            result = jpath.query(
+               this.STATE,
+               makeQuery(jpQuery)
+            )
+         }
+         return result
+      } catch (err) {
+         console.error(err)
+      }
    }
-   
+
    dispatch(storeId: string) {
       const items = this.query({ storeId })
-      
       for (let item of items) {
-         if(typeof item.dispatch !== undefined){
+         if (typeof item.dispatch !== undefined) {
             item.dispatch()
          }
       }
@@ -34,6 +50,7 @@ class Stack extends Factory {
 
    create(storeId: string) {
       const exists = this.query({ storeId, id: this.fatchable?.id }) || []
+      
       if (this.fatchable && !exists.length) {
          this.STATE.push({ ...this.fatchable, storeId })
       }
