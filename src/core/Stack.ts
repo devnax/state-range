@@ -1,4 +1,4 @@
-import Query from './Query'
+import Factory from './Factory'
 
 interface DataProps {
    id: string;
@@ -7,15 +7,15 @@ interface DataProps {
    stores?: any[]
 }
 
-interface CurrentItem {
+interface fatchableInterface {
    dispatch: Function;
    id: string
 }
 
-class Stack extends Query {
+class Stack extends Factory {
 
    STATE: object[] = []
-   currentItem: CurrentItem | null = null
+   fatchable: fatchableInterface | null = null
    
 
    protected dataState(){
@@ -33,9 +33,9 @@ class Stack extends Query {
    }
 
    create(storeId: string) {
-      const exists = this.query({ storeId, id: this.currentItem?.id }) || []
-      if (this.currentItem && !exists.length) {
-         this.STATE.push({ ...this.currentItem, storeId })
+      const exists = this.query({ storeId, id: this.fatchable?.id }) || []
+      if (this.fatchable && !exists.length) {
+         this.STATE.push({ ...this.fatchable, storeId })
       }
    }
 

@@ -6,7 +6,7 @@ import { DISPATCH } from '../dispatch'
 export const STATE: {[key: string]: object[]}  = {}
 
 export default class Store extends Meta{
-   private _observe              = 0
+   private _observe = 0
    
    constructor(){
       super()

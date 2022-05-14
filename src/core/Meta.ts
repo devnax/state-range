@@ -1,9 +1,9 @@
-import Query from './Query'
+import Factory from './Factory'
 
 export const META_STATE: {[key: string]: object[]}  = {}
 
 
-export default class Meta extends Query{
+export default class Meta extends Factory{
    
    constructor(){
       super()

@@ -1,7 +1,8 @@
 import { is_object } from "../utils";
 import jpath from 'jsonpath'
 
-export default class Query{
+export default class Factory{
+
 
     private expression(ex: any){
         let _q

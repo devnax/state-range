@@ -11,7 +11,7 @@ class Block extends Component<Props>{
 
    constructor(props: Props){
       super(props)
-      Stack.currentItem = {id: props.id, dispatch: props.dispatch}
+      Stack.fatchable = {id: props.id, dispatch: props.dispatch}
    }
 
    componentWillUnmount(){
