@@ -39,7 +39,7 @@ export default class Query{
     }
 
     query(jpQuery: any, cb?: any){
-        const state = (this as any).STATE
+        const state = (this as any).dataState()
         try{
             let result: any = false
             if(typeof cb === 'function'){
@@ -60,7 +60,8 @@ export default class Query{
     }
 
     metaQuery(jpQuery: any, cb?: any){
-        const state = (this as any).META_STATE
+        const state = (this as any).metaState()
+        
         try{
             let result: any = false
             if(typeof cb === 'function'){
@@ -81,7 +82,7 @@ export default class Query{
     }
 
     queryNodes(jpQuery: any){
-        const state = (this as any).STATE
+        const state = (this as any).dataState()
         try{
             const result:any = jpath.nodes(
                 state, 

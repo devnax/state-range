@@ -3,14 +3,24 @@ import {uid} from '../utils'
 import Meta from './Meta'
 import { DISPATCH } from '../dispatch'
 
+export const STATE: {[key: string]: object[]}  = {}
+
 export default class Store extends Meta{
    private _observe              = 0
-   protected STATE: object[]     = []
-   private storeId               = uid()
    
+   constructor(){
+      super()
+      if(STATE[this.constructor.name]){
+         throw new Error(`${this.constructor.name} Module Already exists. please choose the diffarent store handler name`)
+      }
+
+      if(!STATE[this.constructor.name]){
+         STATE[this.constructor.name] = []
+      }
+   }
    
    protected addDispatch(){
-      Stack.create(this.storeId)
+      Stack.create(this.constructor.name)
    }
 
    protected makeRow(row: any){
@@ -23,10 +33,10 @@ export default class Store extends Meta{
    dispatch(){
       if(!DISPATCH.noDispatch){
          if(DISPATCH.onDispatch){
-            const id = this.storeId
+            const id = this.constructor.name
             DISPATCH.onDispatchModules = {...DISPATCH.onDispatchModules, [id]: this.dispatch.bind(this)}
          }else{
-            Stack.dispatch(this.storeId)
+            Stack.dispatch(this.constructor.name)
          }
       }
    }
@@ -35,9 +45,13 @@ export default class Store extends Meta{
       return this._observe
    }
    
+   protected dataState(){
+      return STATE[this.constructor.name]
+   }
+   
    getState(){
       this.addDispatch()
-      return this.STATE
+      return STATE[this.constructor.name]
    }
    
    insert(row: object){
@@ -45,7 +59,7 @@ export default class Store extends Meta{
          delete (row as any)._id
       }
       row = this.makeRow(row)
-      this.STATE.push(row)
+      STATE[this.constructor.name].push(row)
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('insert')
       }
@@ -61,7 +75,7 @@ export default class Store extends Meta{
          }
          const format = this.makeRow(row)
          rows_ids.push(format._id || '')
-         this.STATE.push(row)
+         STATE[this.constructor.name].push(row)
       }
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('insertMany')
@@ -75,7 +89,7 @@ export default class Store extends Meta{
          delete (row as any)._id
       }
       row = this.makeRow(row)
-      this.STATE.splice(index, 0, row)
+      STATE[this.constructor.name].splice(index, 0, row)
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('insertAfter')
       }
@@ -137,7 +151,7 @@ export default class Store extends Meta{
       
       this._observe   = Date.now()
       this.query(where, () => null)
-      this.STATE = this.query('@')
+      STATE[this.constructor.name] = this.query('@')
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('delete')
       }
@@ -146,7 +160,7 @@ export default class Store extends Meta{
 
    deleteAll(): void{
       this._observe   = Date.now()
-      this.STATE = []
+      STATE[this.constructor.name] = []
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('delete')
       }
@@ -227,10 +241,10 @@ export default class Store extends Meta{
    
    move(oldIdx: number, newIdx: number){
       
-      const row = this.STATE[oldIdx]
+      const row = STATE[this.constructor.name][oldIdx]
       if(row){
-         this.STATE.splice(oldIdx, 1)
-         this.STATE.splice(newIdx, 0, this.makeRow(row))
+         STATE[this.constructor.name].splice(oldIdx, 1)
+         STATE[this.constructor.name].splice(newIdx, 0, this.makeRow(row))
          if(typeof (this as any).onUpdate == 'function'){
             (this as any).onUpdate('move')
          }

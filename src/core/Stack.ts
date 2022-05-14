@@ -17,9 +17,14 @@ class Stack extends Query {
    STATE: object[] = []
    currentItem: CurrentItem | null = null
    
+
+   protected dataState(){
+      return this.STATE
+   }
    
    dispatch(storeId: string) {
       const items = this.query({ storeId })
+      
       for (let item of items) {
          if(typeof item.dispatch !== undefined){
             item.dispatch()

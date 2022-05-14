@@ -1,9 +1,19 @@
 import Query from './Query'
 
+export const META_STATE: {[key: string]: object[]}  = {}
+
+
 export default class Meta extends Query{
    
-   protected META_STATE: object[] = []
+   constructor(){
+      super()
+      META_STATE[this.constructor.name] = []
+   }
 
+   protected metaState(){
+      return META_STATE[this.constructor.name]
+   }
+   
    setMeta(meta_key: string, meta_value: any){
       const exists = this.metaQuery({meta_key})
 
@@ -17,7 +27,7 @@ export default class Meta extends Query{
             meta_key,
             meta_value
          })
-         this.META_STATE.push(row)
+         META_STATE[this.constructor.name].push(row)
       }
       
       if(typeof (this as any).onUpdate == 'function'){
@@ -43,13 +53,13 @@ export default class Meta extends Query{
 
    getMataState(){
       (this as any).addDispatch()
-      return this.META_STATE
+      return META_STATE[this.constructor.name]
    }
 
    deleteMeta(meta_key: string){
       (this as any)._observe   = Date.now()
       this.metaQuery({meta_key}, () => null)
-      this.META_STATE = this.metaQuery('@')
+      META_STATE[this.constructor.name] = this.metaQuery('@')
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('deleteMeta')
       }
@@ -58,7 +68,7 @@ export default class Meta extends Query{
 
    deleteAllMeta(){
       (this as any)._observe   = Date.now()
-      this.META_STATE = []
+      META_STATE[this.constructor.name] = []
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('deleteAllMeta')
       }
