@@ -1,21 +1,15 @@
 import Meta from './Meta'
-import {STATE} from '../core/State'
+import {DATA} from '../core/Root'
 import {Row, PartOfRow} from '../types'
 
 export default class Store<RowProps = any> extends Meta<RowProps>{
-   
-   getState(): Row<RowProps>[]{
-      this.addDispatch()
-      const data: any = STATE[this.storeId()].data
-      return data
-   }
    
    insert(row: RowProps): Row<RowProps>{
       if((row as any)?._id){
          delete (row as any)._id
       }
       const formatRow = this.makeRow(row)
-      STATE[this.storeId()].data.push(formatRow)
+      DATA.state[this.storeId()].data.push(formatRow)
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('insert')
       }
@@ -31,7 +25,7 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
          }
          const format = this.makeRow(row)
          rows_ids.push(format._id || '')
-         STATE[this.storeId()].data.push(format)
+         DATA.state[this.storeId()].data.push(format)
       }
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('insertMany')
@@ -45,7 +39,7 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
          delete (row as any)._id
       }
       const format = this.makeRow(row)
-      STATE[this.storeId()].data.splice(index, 0, format)
+      DATA.state[this.storeId()].data.splice(index, 0, format)
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('insertAfter')
       }
@@ -109,7 +103,7 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
       
       this._observe   = Date.now()
       this.query(whr, () => null)
-      STATE[this.storeId()].data = this.query('@')
+      DATA.state[this.storeId()].data = this.query('@')
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('delete')
       }
@@ -118,7 +112,7 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
 
    deleteAll(): void{
       this._observe   = Date.now()
-      STATE[this.storeId()].data = []
+      DATA.state[this.storeId()].data = []
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('delete')
       }
@@ -160,7 +154,7 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
    }
    
    count(where?: string | PartOfRow<RowProps> | number): number{
-      return where ? this.find(where).length : this.getState().length
+      return where ? this.find(where).length : this.getState().data.length
    }
    
    find(where?: string | PartOfRow<RowProps> | number): (Row<RowProps>)[]{
@@ -180,16 +174,16 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
       return ex.length ? ex[0] : null
    }
 
-   findAll(): (Row<RowProps>)[]{
-      return this.getState()
+   findAll(): Row<RowProps>[]{
+      return this.getState().data
    }
 
    move(oldIdx: number, newIdx: number){
       
-      const row: any = STATE[this.storeId()].data[oldIdx]
+      const row: any = DATA.state[this.storeId()].data[oldIdx]
       if(row){
-         STATE[this.storeId()].data.splice(oldIdx, 1)
-         STATE[this.storeId()].data.splice(newIdx, 0, this.makeRow(row))
+         DATA.state[this.storeId()].data.splice(oldIdx, 1)
+         DATA.state[this.storeId()].data.splice(newIdx, 0, this.makeRow(row))
          if(typeof (this as any).onUpdate == 'function'){
             (this as any).onUpdate('move')
          }

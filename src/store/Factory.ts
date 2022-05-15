@@ -1,10 +1,8 @@
 import {uid, makeQuery } from "../core/utils";
 import jpath from 'jsonpath'
 import Stack from '../core/Stack'
-import { DISPATCH } from '../core/dispatch'
-import {Row, RowDefault } from "../types";
-
-import {STATE} from '../core/State'
+import {Row, RowDefault, STATE_FORMAT } from "../types";
+import {DATA} from '../core/Root'
 
 
 export default class Factory<RowProps> {
@@ -13,11 +11,15 @@ export default class Factory<RowProps> {
     storeId = () => this.index ? this.constructor.name + this.index : this.constructor.name
 
     constructor() {
-        while (STATE[this.storeId()]) {
+        while (this.getState()) {
             this.index += 1
         }
+        DATA.state[this.storeId()] = { data: [], meta: [] }
+    }
 
-        STATE[this.storeId()] = { data: [], meta: [] }
+    getState(): STATE_FORMAT<RowProps>{
+        this.addDispatch()
+        return  DATA.state[this.storeId()]
     }
 
     protected addDispatch(){
@@ -25,10 +27,10 @@ export default class Factory<RowProps> {
     }
   
      dispatch(){
-        if(!DISPATCH.noDispatch){
-           if(DISPATCH.onDispatch){
+        if(!DATA.noDispatch){
+           if(DATA.onDispatch){
               const id = this.storeId()
-              DISPATCH.onDispatchModules = {...DISPATCH.onDispatchModules, [id]: this.dispatch.bind(this)}
+              DATA.onDispatchModules = {...DATA.onDispatchModules, [id]: this.dispatch.bind(this)}
            }else{
               Stack.dispatch(this.storeId())
            }
@@ -47,7 +49,7 @@ export default class Factory<RowProps> {
     }
 
     query(jpQuery: any, cb?: (x: any) => any): Row<RowProps>[]  {
-        const state = STATE[this.storeId()].data
+        const state = this.getState().data
         let res = []
 
         try {
@@ -66,7 +68,7 @@ export default class Factory<RowProps> {
     }
 
     metaQuery(jpQuery: any, cb?: (x: any) => any) {
-        const state = STATE[this.storeId()].meta
+        const state = this.getState().meta
 
         try {
             let result: any = false
@@ -88,7 +90,7 @@ export default class Factory<RowProps> {
     }
 
     queryNodes(jpQuery: any) {
-        const state = STATE[this.storeId()].data
+        const state = this.getState().data
         try {
             const result: any = jpath.nodes(state, makeQuery(jpQuery) )
             return result

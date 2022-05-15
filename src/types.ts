@@ -6,27 +6,28 @@ export interface StackProps {
 }
 
 
-export interface STATE_FORMAT{
-   data: object[];
-   meta: object[];
-}
-
-export type STATE_TYPES = {
-   [key: string]: STATE_FORMAT
-}
-
-
 export interface RowDefault{
    _id: string;
    observe: number
 }
 
-export type Row<More> = RowDefault & More
-export type PartOfRow<More> = Partial<RowDefault | More>
+export type Row<More = any> = RowDefault & More
+export type PartOfRow<More = any> = Partial<RowDefault | More>
+
+
+export interface STATE_FORMAT<RowType = object>{
+   data: Row<RowType>[];
+   meta: object[];
+}
+
+export type STATE_TYPES = {
+   [key: string]: STATE_FORMAT<Row<any>>
+}
 
 
 export interface DispatchOptions {
+   state: STATE_TYPES;
    noDispatch: boolean;
    onDispatch: boolean;
-   onDispatchModules: {[key: string]: Function};
+   onDispatchModules: {[key: string]: Function}
 }

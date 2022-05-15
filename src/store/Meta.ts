@@ -1,5 +1,5 @@
 import Factory from './Factory'
-import {STATE} from '../core/State'
+import {DATA} from '../core/Root'
 
 export default class Meta<RowProps> extends Factory<RowProps>{
    
@@ -16,7 +16,7 @@ export default class Meta<RowProps> extends Factory<RowProps>{
             meta_key,
             meta_value
          })
-         STATE[this.storeId()].meta.push(row)
+         DATA.state[this.storeId()].meta.push(row)
       }
       
       if(typeof (this as any).onUpdate == 'function'){
@@ -40,15 +40,10 @@ export default class Meta<RowProps> extends Factory<RowProps>{
       return [data, (newdata: any) => this.setMeta(meta_key, newdata)]
    }
 
-   getMataState(): object[]{
-      this.addDispatch()
-      return STATE[this.storeId()].meta
-   }
-
    deleteMeta(meta_key: string){
       (this as any)._observe   = Date.now()
       this.metaQuery({meta_key}, () => null)
-      STATE[this.storeId()].meta = this.metaQuery('@')
+      DATA.state[this.storeId()].meta = this.metaQuery('@')
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('deleteMeta')
       }
@@ -57,7 +52,7 @@ export default class Meta<RowProps> extends Factory<RowProps>{
 
    deleteAllMeta(){
       (this as any)._observe   = Date.now()
-      STATE[this.storeId()].meta = []
+     DATA.state[this.storeId()].meta = []
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('deleteAllMeta')
       }
