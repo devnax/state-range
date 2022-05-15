@@ -2,7 +2,7 @@ import {uid, makeQuery } from "../core/utils";
 import jpath from 'jsonpath'
 import Stack from '../core/Stack'
 import { DISPATCH } from '../core/dispatch'
-import {Row, RowDef } from "../types";
+import {Row, RowDefault } from "../types";
 
 import {STATE} from '../core/State'
 
@@ -39,7 +39,7 @@ export default class Factory<RowProps> {
         return this._observe
      }
 
-    protected makeRow(row: RowProps & Partial<RowDef>): Row<RowProps>{
+    protected makeRow(row: RowProps & Partial<RowDefault>): Row<RowProps>{
         const _id = row._id || '_' + uid()
         const now = Date.now()
         this._observe = now
