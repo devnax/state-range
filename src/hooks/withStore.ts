@@ -1,5 +1,5 @@
 import {ComponentType, Component, createElement, useId, useMemo, useState} from 'react'
-import Stack from './core/Stack'
+import Stack from '../core/Stack'
 
 interface Props{
    children?: JSX.Element;

@@ -1,9 +1,4 @@
-interface DispatchOptions {
-   noDispatch: boolean;
-   onDispatch: boolean;
-   onDispatchModules: {[key: string]: Function};
-}
-
+import {DispatchOptions} from '../types'
 
 export const DISPATCH: DispatchOptions = {
    noDispatch: false,
@@ -15,11 +10,10 @@ export const noDispatch = (callback: Function) => {
    DISPATCH.noDispatch = true
    callback()
    DISPATCH.noDispatch = false
-
 }
 
 
-export const dispatch = (cb: () => void) => {
+export const dispatch = (cb: Function) => {
    DISPATCH.onDispatch = true
    cb()
    DISPATCH.onDispatch = false

@@ -1,17 +1,13 @@
-import {uid, makeQuery } from "../utils";
+import {uid, makeQuery } from "../core/utils";
 import jpath from 'jsonpath'
-import Stack from './Stack'
-import { DISPATCH } from '../dispatch'
+import Stack from '../core/Stack'
+import { DISPATCH } from '../core/dispatch'
+import {Row, RowDef } from "../types";
 
-interface StateInterface {
-    data: object[],
-    meta: object[],
-}
-
-export const STATE: { [key: string]: StateInterface } = {}
+import {STATE} from '../core/State'
 
 
-export default class Factory {
+export default class Factory<RowProps> {
     protected _observe = 0
     protected index: number = 0;
     storeId = () => this.index ? this.constructor.name + this.index : this.constructor.name
@@ -20,10 +16,8 @@ export default class Factory {
         while (STATE[this.storeId()]) {
             this.index += 1
         }
-        STATE[this.storeId()] = {
-            data: [],
-            meta: []
-        }
+
+        STATE[this.storeId()] = { data: [], meta: [] }
     }
 
     protected addDispatch(){
@@ -45,30 +39,33 @@ export default class Factory {
         return this._observe
      }
 
-    protected makeRow(row: any) {
+    protected makeRow(row: RowProps & Partial<RowDef>): Row<RowProps>{
         const _id = row._id || '_' + uid()
         const now = Date.now()
         this._observe = now
         return { ...row, _id, observe: now }
     }
 
-    query(jpQuery: any, cb?: any) {
+    query(jpQuery: any, cb?: (x: any) => any): Row<RowProps>[]  {
         const state = STATE[this.storeId()].data
+        let res = []
+
         try {
             let result: any = false
             if (typeof cb === 'function') {
-                result = jpath.apply( state, makeQuery(jpQuery),
-                    cb)
+                result = jpath.apply( state, makeQuery(jpQuery), cb)
             } else {
                 result = jpath.query( state, makeQuery(jpQuery) )
             }
-            return result
+            res = result
         } catch (err) {
             console.error(err)
         }
+
+        return res
     }
 
-    metaQuery(jpQuery: any, cb?: any) {
+    metaQuery(jpQuery: any, cb?: (x: any) => any) {
         const state = STATE[this.storeId()].meta
 
         try {

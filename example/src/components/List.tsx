@@ -7,13 +7,21 @@ import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ModeEditIcon from '@mui/icons-material/ModeEdit';
 
-import {dispatch, withStore} from '../../../.'
+import {dispatch, withStore, getState, replaceState} from '../../../.'
 import Todo from '../models/Todo'
 
 
 const UIList = () => {
   const todos = Todo.find()
-  // console.log("List")
+
+  React.useEffect(() => {
+    const state = localStorage.getItem('state')
+    if(state){
+      const parsed = JSON.parse(state)
+      replaceState(parsed)
+      Todo.dispatch()
+    }
+  }, [])
   
   return (
     <List sx={{ width: '100%', mt: 2,bgcolor: 'background.paper' }}>

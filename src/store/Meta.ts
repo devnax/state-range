@@ -1,9 +1,7 @@
 import Factory from './Factory'
-import {STATE} from './Factory'
+import {STATE} from '../core/State'
 
-
-export default class Meta extends Factory{
-   
+export default class Meta<RowProps> extends Factory<RowProps>{
    
    setMeta(meta_key: string, meta_value: any){
       const exists = this.metaQuery({meta_key})

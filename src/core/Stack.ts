@@ -1,23 +1,12 @@
-import {makeQuery} from '../utils'
+import {makeQuery} from './utils'
 import jpath from 'jsonpath'
+import {StackProps} from '../types'
 
-
-interface DataProps {
-   id: string;
-   dispatch: Function;
-   active?: boolean;
-   stores?: any[]
-}
-
-interface fatchableInterface {
-   dispatch: Function;
-   id: string
-}
 
 class Stack {
 
    STATE: object[] = []
-   fatchable: fatchableInterface | null = null
+   fatchable: Exclude<StackProps, 'stores'> | null = null
 
    query(jpQuery: any, cb?: any) {
       try {
@@ -50,19 +39,18 @@ class Stack {
 
    create(storeId: string) {
       const exists = this.query({ storeId, id: this.fatchable?.id }) || []
-      
       if (this.fatchable && !exists.length) {
          this.STATE.push({ ...this.fatchable, storeId })
       }
    }
 
-   update(data: Partial<DataProps>, where: object) {
-      this.query(where, (prevRow: DataProps) => {
+   update(data: Partial<StackProps>, where: Partial<StackProps>) {
+      this.query(where, (prevRow: StackProps) => {
          return { ...prevRow, ...data, id: prevRow.id }
       })
    }
 
-   delete(where: string | object) {
+   delete(where: string | Partial<StackProps>) {
       if (typeof where === 'string') {
          where = { id: where }
       }

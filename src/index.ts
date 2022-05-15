@@ -1,9 +1,12 @@
-import Store from './core'
-import withMemo from './withMemo'
-import withStore from './withStore'
-import useMeta from './useMeta'
-import { noDispatch, dispatch } from './dispatch'
-import {STATE} from './core/Factory'
+import Store from './store'
+import withMemo from './hooks/withMemo'
+import withStore from './hooks/withStore'
+import useMeta from './hooks/useMeta'
+
+export { noDispatch, dispatch } from './core/dispatch'
+export { getState, replaceState, mergeState } from './core/State'
+
+export type {Row, PartOfRow, RowDefault} from './types'
 
 
 export {
@@ -11,7 +14,4 @@ export {
    withMemo,
    withStore,
    useMeta,
-   noDispatch,
-   dispatch,
-   STATE
 }

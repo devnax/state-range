@@ -1,27 +1,29 @@
 import Meta from './Meta'
-import {STATE} from './Factory'
+import {STATE} from '../core/State'
+import {Row, PartOfRow} from '../types'
 
-export default class Store extends Meta{
+export default class Store<RowProps = any> extends Meta<RowProps>{
    
-   getState(){
+   getState(): Row<RowProps>[]{
       this.addDispatch()
-      return STATE[this.storeId()].data
+      const data: any = STATE[this.storeId()].data
+      return data
    }
    
-   insert(row: object): object{
+   insert(row: RowProps): Row<RowProps>{
       if((row as any)?._id){
          delete (row as any)._id
       }
-      row = this.makeRow(row)
-      STATE[this.storeId()].data.push(row)
+      const formatRow = this.makeRow(row)
+      STATE[this.storeId()].data.push(formatRow)
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('insert')
       }
       this.dispatch()
-      return row
+      return formatRow
    }
    
-   insertMany(rows: object[]): string[]{
+   insertMany(rows: RowProps[]): string[]{
       const rows_ids: string[] = []
       for(let row of rows){
          if((row as any)?._id){
@@ -29,7 +31,7 @@ export default class Store extends Meta{
          }
          const format = this.makeRow(row)
          rows_ids.push(format._id || '')
-         STATE[this.storeId()].data.push(row)
+         STATE[this.storeId()].data.push(format)
       }
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('insertMany')
@@ -38,26 +40,27 @@ export default class Store extends Meta{
       return rows_ids
    }
    
-   insertAfter(row: object, index: number): object{
+   insertAfter(row: RowProps, index: number): Row<RowProps>{
       if((row as any)?._id){
          delete (row as any)._id
       }
-      row = this.makeRow(row)
-      STATE[this.storeId()].data.splice(index, 0, row)
+      const format = this.makeRow(row)
+      STATE[this.storeId()].data.splice(index, 0, format)
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('insertAfter')
       }
       this.dispatch()
-      return row
+      return format
    }
    
-   update(row: object, where?: string | object | number, callback?: (r: object) => object): void{
+   update(row: RowProps, where?: string | PartOfRow<RowProps> | number, callback?: (r: Row<RowProps>) => Row<RowProps>): void{
+      let whr: any = where
       if(typeof where === 'string'){
-         where = {_id: where}
+         whr = {_id: where}
       }
-      const exists = this.query(where) || []
+      const exists = this.query(whr) || []
       if(exists.length){
-         this.query(where, (prevRow: object) => {
+         this.query(whr, (prevRow: Row<RowProps>) => {
             if(typeof callback === 'function'){
                prevRow = callback(prevRow)
             }
@@ -72,15 +75,15 @@ export default class Store extends Meta{
       }
    }
 
-   updateFirst(row: object, where?: string | object | number, callback?: (r: object) => object){
+   updateFirst(row: RowProps, where?: string | PartOfRow<RowProps> | number, callback?: (r: Row<RowProps>) => Row<RowProps>){
       const exists = this.query(where) || []
       if(exists.length){
          this.update(row, exists[0]._id, callback)
       }
    }
 
-   updateAll(row: object, callback?: (r: object) => object): void{
-      this.query(null, (prevRow: object) => {
+   updateAll(row: RowProps, callback?: (r: Row<RowProps>) => Row<RowProps>): void{
+      this.query(null, (prevRow: Row<RowProps>) => {
          if(typeof callback === 'function'){
             prevRow = callback(prevRow)
          }
@@ -94,17 +97,18 @@ export default class Store extends Meta{
       this.dispatch()
    }
    
-   delete(where?: string | object | number): void{
+   delete(where?: string | PartOfRow<RowProps> | number): void{
+      let whr: any = where
       if(typeof where === 'string'){
-         where = {_id: where}
+         whr = {_id: where}
       }
-      const exists = this.query(where) || []
+      const exists = this.query(whr) || []
       if(!exists.length){
          return
       }
       
       this._observe   = Date.now()
-      this.query(where, () => null)
+      this.query(whr, () => null)
       STATE[this.storeId()].data = this.query('@')
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('delete')
@@ -121,16 +125,17 @@ export default class Store extends Meta{
       this.dispatch()
    }
 
-   deleteColumns(cols: string[], where?: string | object | number, callback?: (r: object) => object): void{
+   deleteColumns(cols: (keyof RowProps)[], where?: string | PartOfRow<RowProps> | number, callback?: (r: Row<RowProps>) => Row<RowProps>): void{
+      let whr: any = where
       if(typeof where === 'string'){
-         where = {_id: where}
+         whr = {_id: where}
       }
-      const exists = this.query(where) || []
+      const exists = this.query(whr) || []
       if(!exists.length){
          return
       }
       
-      this.query(where, (prevRow: any) => {
+      this.query(whr, (prevRow: Row<RowProps>) => {
          if(typeof callback === 'function'){
             prevRow = callback(prevRow)
          }
@@ -154,44 +159,34 @@ export default class Store extends Meta{
       this.dispatch()
    }
    
-   count(where?: string | object | number): number{
+   count(where?: string | PartOfRow<RowProps> | number): number{
       return where ? this.find(where).length : this.getState().length
    }
    
-   find(where?: string | object | number): object[]{
+   find(where?: string | PartOfRow<RowProps> | number): (Row<RowProps>)[]{
       this.addDispatch()
       return this.query(where) || []
    }
 
-   findFirst(where?: string | object | number): object | null {
+   findFirst(where?: string | PartOfRow<RowProps> | number): (Row<RowProps>) | null {
       this.addDispatch()
       const ex = this.find(where)
       return ex.length ? ex[0] : null
    }
 
-   findById(_id: string): object | null{
+   findById(_id: string): Row<RowProps> | null{
       this.addDispatch()
       const ex = this.find({_id})
       return ex.length ? ex[0] : null
    }
 
-   findAll(): object[]{
+   findAll(): (Row<RowProps>)[]{
       return this.getState()
    }
 
-   getLastRow(): object | null{
-      const rows = this.findAll()
-      return rows.length ? rows[rows.length -1] : null
-   }
-
-   getFirstRow(): object | null{
-      const rows = this.findAll()
-      return rows.length ? rows[0] : null
-   }
-   
    move(oldIdx: number, newIdx: number){
       
-      const row = STATE[this.storeId()].data[oldIdx]
+      const row: any = STATE[this.storeId()].data[oldIdx]
       if(row){
          STATE[this.storeId()].data.splice(oldIdx, 1)
          STATE[this.storeId()].data.splice(newIdx, 0, this.makeRow(row))
