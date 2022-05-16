@@ -41,8 +41,8 @@ export const dispatch = (cb: Function) => {
    DATA.onDispatch = false
    
    for(let key in DATA.onDispatchModules){
-      const dispatch = DATA.onDispatchModules[key]
-      dispatch()
+      const {dispatch, type} = DATA.onDispatchModules[key]
+      dispatch({type})
    }
    DATA.onDispatchModules = {}
 }

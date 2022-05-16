@@ -29,7 +29,7 @@ type Resolver<T> = (props: T) => any[]
 const withStore = <T, R extends Resolver<T>>(Comp: ComponentType<T>, resolve?: R) => {
    
    const Render = <P extends T>(props: P) => {
-      const id           = useId()
+      const id           = useId().replace(/:/gi, '')
       const [, dispatch] = useState(0)
       const _up          = () => dispatch(Math.random())
       if(resolve){

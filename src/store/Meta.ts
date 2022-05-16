@@ -20,13 +20,13 @@ export default class Meta<RowProps> extends Factory<RowProps>{
       }
       
       if(typeof (this as any).onUpdate == 'function'){
-         (this as any).onUpdate('addMeta')
+         (this as any).onUpdate('meta', 'addMeta')
       }
-      this.dispatch()
+      this.dispatch({type: 'meta', name: 'setMeta'})
    }
 
    getMeta(meta_key: string, def?: any){
-      this.addDispatch()
+      this.addDispatch({type: "meta", name: 'getMeta'})
       const exists = this.metaQuery({meta_key})
       if(exists.length){
          return exists[0].meta_value
@@ -45,22 +45,22 @@ export default class Meta<RowProps> extends Factory<RowProps>{
       this.metaQuery({meta_key}, () => null)
       DATA.state[this.storeId()].meta = this.metaQuery('@')
       if(typeof (this as any).onUpdate == 'function'){
-         (this as any).onUpdate('deleteMeta')
+         (this as any).onUpdate('meta', 'deleteMeta')
       }
-      this.dispatch()
+      this.dispatch({type: 'meta', name: 'deleteMeta'})
    }
 
    deleteAllMeta(){
       (this as any)._observe   = Date.now()
      DATA.state[this.storeId()].meta = []
       if(typeof (this as any).onUpdate == 'function'){
-         (this as any).onUpdate('deleteAllMeta')
+         (this as any).onUpdate('meta', 'deleteAllMeta')
       }
-      this.dispatch()
+      this.dispatch({type: 'meta', name: 'deleteAllMeta'})
    }
 
    getMetaInfo(meta_key: string, def?: object){
-      this.addDispatch()
+      this.addDispatch({type: "meta", name: 'getMetaInfo'})
       const exists = this.metaQuery({meta_key})
       if(exists.length){
          return exists[0]

@@ -11,9 +11,9 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
       const formatRow = this.makeRow(row)
       DATA.state[this.storeId()].data.push(formatRow)
       if(typeof (this as any).onUpdate == 'function'){
-         (this as any).onUpdate('insert')
+         (this as any).onUpdate('data', 'insert')
       }
-      this.dispatch()
+      this.dispatch({type: 'data', name: 'insert'})
       return formatRow
    }
    
@@ -28,9 +28,9 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
          DATA.state[this.storeId()].data.push(format)
       }
       if(typeof (this as any).onUpdate == 'function'){
-         (this as any).onUpdate('insertMany')
+         (this as any).onUpdate('data', 'insertMany')
       }
-      this.dispatch()
+      this.dispatch({type: 'data', name: 'insertMany'})
       return rows_ids
    }
    
@@ -41,9 +41,9 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
       const format = this.makeRow(row)
       DATA.state[this.storeId()].data.splice(index, 0, format)
       if(typeof (this as any).onUpdate == 'function'){
-         (this as any).onUpdate('insertAfter')
+         (this as any).onUpdate('data', 'insertAfter')
       }
-      this.dispatch()
+      this.dispatch({type: 'data', name: 'insertAfter'})
       return format
    }
    
@@ -63,9 +63,9 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
          })
    
          if(typeof (this as any).onUpdate == 'function'){
-            (this as any).onUpdate('update')
+            (this as any).onUpdate('data', 'update')
          }
-         this.dispatch()
+         this.dispatch({type: 'data', name: 'update'})
       }
    }
 
@@ -86,9 +86,9 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
       })
 
       if(typeof (this as any).onUpdate == 'function'){
-         (this as any).onUpdate('updateAll')
+         (this as any).onUpdate('data', 'updateAll')
       }
-      this.dispatch()
+      this.dispatch({type: 'data', name: 'updateAll'})
    }
    
    delete(where?: string | PartOfRow<RowProps> | number): void{
@@ -101,22 +101,20 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
          return
       }
       
-      this._observe   = Date.now()
       this.query(whr, () => null)
       DATA.state[this.storeId()].data = this.query('@')
       if(typeof (this as any).onUpdate == 'function'){
-         (this as any).onUpdate('delete')
+         (this as any).onUpdate('data', 'delete')
       }
-      this.dispatch()
+      this.dispatch({type: 'data', name: "delete"})
    }
 
    deleteAll(): void{
-      this._observe   = Date.now()
       DATA.state[this.storeId()].data = []
       if(typeof (this as any).onUpdate == 'function'){
-         (this as any).onUpdate('delete')
+         (this as any).onUpdate('data', 'delete')
       }
-      this.dispatch()
+      this.dispatch({type: 'data', name: "deleteAll"})
    }
 
    deleteColumns(cols: (keyof RowProps)[], where?: string | PartOfRow<RowProps> | number, callback?: (r: Row<RowProps>) => Row<RowProps>): void{
@@ -148,9 +146,9 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
       })
 
       if(typeof (this as any).onUpdate == 'function'){
-         (this as any).onUpdate('deleteColumns')
+         (this as any).onUpdate('data', 'deleteColumns')
       }
-      this.dispatch()
+      this.dispatch({type: 'data', name: 'deleteColumns'})
    }
    
    count(where?: string | PartOfRow<RowProps> | number): number{
@@ -158,18 +156,18 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
    }
    
    find(where?: string | PartOfRow<RowProps> | number): (Row<RowProps>)[]{
-      this.addDispatch()
+      this.addDispatch({type: "data", name: 'find'})
       return this.query(where) || []
    }
 
    findFirst(where?: string | PartOfRow<RowProps> | number): (Row<RowProps>) | null {
-      this.addDispatch()
+      this.addDispatch({type: "data", name: 'findFirst'})
       const ex = this.find(where)
       return ex.length ? ex[0] : null
    }
 
    findById(_id: string): Row<RowProps> | null{
-      this.addDispatch()
+      this.addDispatch({type: "data", name: 'findById'})
       const ex = this.find({_id})
       return ex.length ? ex[0] : null
    }
@@ -185,15 +183,15 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
          DATA.state[this.storeId()].data.splice(oldIdx, 1)
          DATA.state[this.storeId()].data.splice(newIdx, 0, this.makeRow(row))
          if(typeof (this as any).onUpdate == 'function'){
-            (this as any).onUpdate('move')
+            (this as any).onUpdate('data', 'move')
          }
-         this.dispatch()
+         this.dispatch({type: 'data', name: 'move'})
       }
    }
    
    getIndex(id: string): number | void{
       if(id){
-         this.addDispatch()
+         this.addDispatch({type: "data", name: 'getIndex'})
          const data:any = this.queryNodes(id)
          if(data?.length){
             return data[0].path[1]

@@ -1,8 +1,10 @@
 
 export interface StackProps {
    id: string;
+   storeId: string;
    dispatch: Function;
-   stores?: any[]
+   isData?: boolean;
+   isMeta?: boolean;
 }
 
 
@@ -29,5 +31,16 @@ export interface DispatchOptions {
    state: STATE_TYPES;
    noDispatch: boolean;
    onDispatch: boolean;
-   onDispatchModules: {[key: string]: Function}
+   onDispatchModules: {
+      [key: string]: {
+         dispatch: Function;
+         type?: "data" | "meta";
+      }
+   }
+}
+
+
+export interface StoreDispatchCallbackInfo{
+   type: "data" | "meta",
+   name: string
 }

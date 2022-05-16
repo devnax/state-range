@@ -1,1 +1,0 @@
-import {DATA} from "./Root";

@@ -7,7 +7,7 @@ import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ModeEditIcon from '@mui/icons-material/ModeEdit';
 
-import {dispatch, withStore, getState, replaceState} from '../../../.'
+import {dispatch, withStore, replaceState} from '../../../.'
 import Todo from '../models/Todo'
 
 

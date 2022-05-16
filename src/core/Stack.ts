@@ -5,42 +5,57 @@ import {StackProps} from '../types'
 
 class Stack {
 
-   STATE: object[] = []
-   fatchable: Exclude<StackProps, 'stores'> | null = null
+   STATE: StackProps[] = []
+   fatchable: Pick<StackProps, 'id' | 'dispatch'> | null = null
 
-   query(jpQuery: any, cb?: any) {
+   query(jpQuery: any, cb?: any): StackProps[] {
+      let res = []
       try {
-         let result: any = false
          if (typeof cb === 'function') {
-            result = jpath.apply(
+            res = jpath.apply(
                this.STATE,
                makeQuery(jpQuery),
                cb)
          } else {
-            result = jpath.query(
+            res = jpath.query(
                this.STATE,
                makeQuery(jpQuery)
             )
          }
-         return result
       } catch (err) {
          console.error(err)
       }
+
+      return res
    }
 
-   dispatch(storeId: string) {
-      const items = this.query({ storeId })
+   dispatch({storeId}: Partial<Pick<StackProps, 'storeId'>>) {
+      let find: any = {storeId}
+      const items = this.query(find)
       for (let item of items) {
          if (typeof item.dispatch !== undefined) {
-            item.dispatch()
+            if(item.isData|| item.isMeta || (!item.isData && !item.isMeta)){
+               item.dispatch()
+            }
          }
       }
    }
 
-   create(storeId: string) {
-      const exists = this.query({ storeId, id: this.fatchable?.id }) || []
-      if (this.fatchable && !exists.length) {
-         this.STATE.push({ ...this.fatchable, storeId })
+   create({storeId, isData, isMeta}: Pick<StackProps, 'storeId' | 'isData' | 'isMeta'>) {
+      if(!this.fatchable){
+         return;
+      }
+      const exists = this.query({ storeId, id: this.fatchable?.id })
+      if(!exists.length){
+         this.STATE.push({ ...this.fatchable, storeId, isData, isMeta })
+      }else{
+         const item: any = exists[0]
+         if(isData !== undefined && isData && !item.isData){
+            this.update({ isData }, {id: item.id})
+         }
+         if(isMeta !== undefined && isMeta && !item.isMeta){
+            this.update({isMeta}, {id: item.id})
+         }
       }
    }
 
@@ -56,11 +71,6 @@ class Stack {
       }
       this.query(where, () => null)
       this.STATE = this.query('@')
-   }
-
-   findById(id: string) {
-      const ex = this.query({ id }) || []
-      return ex.length ? ex[0] : null
    }
 }
 
