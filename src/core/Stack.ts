@@ -8,7 +8,7 @@ class Stack {
    STATE: StackProps[] = []
    fatchable: Pick<StackProps, 'id' | 'dispatch'> | null = null
 
-   query(jpQuery: any, cb?: any): StackProps[] {
+   find(jpQuery: any, cb?: any): StackProps[] {
       let res = []
       try {
          if (typeof cb === 'function') {
@@ -29,38 +29,38 @@ class Stack {
       return res
    }
 
-   dispatch({storeId}: Partial<Pick<StackProps, 'storeId'>>) {
+   dispatch({storeId, type}: Partial<Pick<StackProps, 'storeId' | 'type'>>) {
       let find: any = {storeId}
-      const items = this.query(find)
+      if(type){
+         find.type = type
+      }
+      const items = this.find(find)
+      const done: any[] = []
+
       for (let item of items) {
-         if (typeof item.dispatch !== undefined) {
-            if(item.isData|| item.isMeta || (!item.isData && !item.isMeta)){
-               item.dispatch()
-            }
+         if (typeof item.dispatch !== undefined && !done.includes(item.id)) {
+            done.push(item.id)
+            item.dispatch()
          }
       }
    }
 
-   create({storeId, isData, isMeta}: Pick<StackProps, 'storeId' | 'isData' | 'isMeta'>) {
+   create({storeId, type}: Pick<StackProps, 'storeId' | 'type'>) {
       if(!this.fatchable){
          return;
       }
-      const exists = this.query({ storeId, id: this.fatchable?.id })
+      const exists = this.find({ storeId, id: this.fatchable?.id, type })
       if(!exists.length){
-         this.STATE.push({ ...this.fatchable, storeId, isData, isMeta })
-      }else{
-         const item: any = exists[0]
-         if(isData !== undefined && isData && !item.isData){
-            this.update({ isData }, {id: item.id})
-         }
-         if(isMeta !== undefined && isMeta && !item.isMeta){
-            this.update({isMeta}, {id: item.id})
-         }
+         this.STATE.push({ 
+            ...this.fatchable, 
+            storeId,
+            type
+         })
       }
    }
 
    update(data: Partial<StackProps>, where: Partial<StackProps>) {
-      this.query(where, (prevRow: StackProps) => {
+      this.find(where, (prevRow: StackProps) => {
          return { ...prevRow, ...data, id: prevRow.id }
       })
    }
@@ -69,8 +69,8 @@ class Stack {
       if (typeof where === 'string') {
          where = { id: where }
       }
-      this.query(where, () => null)
-      this.STATE = this.query('@')
+      this.find(where, () => null)
+      this.STATE = this.find('@')
    }
 }
 

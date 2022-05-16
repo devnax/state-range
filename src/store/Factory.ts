@@ -25,30 +25,35 @@ export default class Factory<RowProps> {
     }
 
     protected addDispatch({type}: StoreDispatchCallbackInfo) {
-        const isData = type === 'data'
-        Stack.create({storeId: this.storeId(), isData, isMeta: !isData })
+        Stack.create({storeId: this.storeId(), type})
     }
 
     dispatch(info?: StoreDispatchCallbackInfo) {
+        
         if (!DATA.noDispatch) {
             if (DATA.onDispatch) {
-                DATA.onDispatchModules = { ...DATA.onDispatchModules, [`${this.storeId()}${info?.type}`]: {
-                    dispatch: this.dispatch.bind(this),
-                    type: info?.type
-                }}
-            } else {
+                const storeId = this.storeId()
+                let find: any = {storeId}
                 if(info?.type){
-                    if(info.type === 'data'){
+                    find.type = info.type
+                }
+                const getStack = Stack.find(find)
+                DATA.onDispatchModules = [...DATA.onDispatchModules, ...getStack]
+            } else {
+                
+                if(info?.type){
+                    const isData = info.type === 'data'
+                    if(isData){
                         this._observe_data = Date.now()
                     }else{
                         this._observe_meta = Date.now()
                     }
+                    Stack.dispatch({ storeId: this.storeId(),  type: info.type })
                 }else{
                     this._observe_data = Date.now()
                     this._observe_meta = Date.now()
+                    Stack.dispatch({storeId: this.storeId()})
                 }
-
-                Stack.dispatch({storeId: this.storeId()})
             }
         }
     }

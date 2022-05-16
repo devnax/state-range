@@ -4,7 +4,7 @@ export const DATA: DispatchOptions = {
    state: {},
    noDispatch: false,
    onDispatch: false,
-   onDispatchModules: {}
+   onDispatchModules: []
 }
 
 export const getState = () => DATA.state
@@ -39,10 +39,13 @@ export const dispatch = (cb: Function) => {
    DATA.onDispatch = true
    cb()
    DATA.onDispatch = false
-   
-   for(let key in DATA.onDispatchModules){
-      const {dispatch, type} = DATA.onDispatchModules[key]
-      dispatch({type})
+   const done: any[] = []
+   for(let item of DATA.onDispatchModules){
+      if(item.dispatch && !done.includes(item.id)){
+         const {dispatch} = item
+         done.push(item.id)
+         dispatch()
+      }
    }
-   DATA.onDispatchModules = {}
+   DATA.onDispatchModules = []
 }
