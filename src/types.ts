@@ -1,4 +1,12 @@
 
+export interface WithStoreClassProps{
+   children?: JSX.Element;
+   id: string;
+   dispatch: Function;
+}
+
+
+
 export interface StackProps {
    id: string;
    storeId: string;
