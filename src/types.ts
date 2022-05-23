@@ -48,4 +48,4 @@ export interface StoreDispatchCallbackInfo{
    name: string
 }
 
-export type WhereType<Props> = string | PartOfRow<Props> | number
+export type WhereType<Props> = string | PartOfRow<Props>

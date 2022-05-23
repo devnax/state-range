@@ -3,6 +3,7 @@ import jpath from 'jsonpath'
 import Stack from '../core/Stack'
 import { Row, RowDefault, STATE_FORMAT, StoreDispatchCallbackInfo } from "../types";
 import { DATA } from '../core/Root'
+import parseSql from "../core/parser";
 
 
 export default class Factory<RowProps> {
@@ -74,21 +75,36 @@ export default class Factory<RowProps> {
 
     query(jpQuery: any, cb?: (x: any) => any): Row<RowProps>[] {
         const state = DATA.state[this.storeId()].data
-        let res = []
+        let result: Row<RowProps>[] = []
+        let q: any = makeQuery(jpQuery)
+        let parse;
+
+        if(typeof jpQuery === 'string' && !q){
+            parse = parseSql(jpQuery)
+            if(parse.where){
+                q = parse.where
+            }else{
+                q = ''
+            }
+        }
 
         try {
             let result: any = false
-            if (typeof cb === 'function') {
-                result = jpath.apply(state, makeQuery(jpQuery), cb)
-            } else {
-                result = jpath.query(state, makeQuery(jpQuery))
+            if (typeof cb === 'function' && q) {
+                result = jpath.apply(state, q, cb)
+            } else if(q) {
+                result = jpath.query(state, q)
             }
-            res = result
         } catch (err) {
             console.error(err)
         }
 
-        return res
+
+        if(parse && result.length){
+            
+        }
+
+        return result
     }
 
     metaQuery(jpQuery: any, cb?: (x: any) => any) {
