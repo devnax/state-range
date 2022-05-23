@@ -2566,6 +2566,11 @@
     "is-date-object" "^1.0.1"
     "is-symbol" "^1.0.2"
 
+"esbuild-windows-64@0.14.21":
+  "integrity" "sha512-kDgHjKOHwjfJDCyRGELzVxiP/RBJBTA+wyspf78MTTJQkyPuxH2vChReNdWc+dU2S4gIZFHMdP1Qrl/k22ZmaA=="
+  "resolved" "https://registry.npmjs.org/esbuild-windows-64/-/esbuild-windows-64-0.14.21.tgz"
+  "version" "0.14.21"
+
 "esbuild@^0.14.18":
   "integrity" "sha512-7WEoNMBJdLN993dr9h0CpFHPRc3yFZD+EAVY9lg6syJJ12gc5fHq8d75QRExuhnMkT2DaRiIKFThRvDWP+fO+A=="
   "resolved" "https://registry.npmjs.org/esbuild/-/esbuild-0.14.21.tgz"

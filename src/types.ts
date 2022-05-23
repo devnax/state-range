@@ -21,6 +21,7 @@ export interface RowDefault{
 }
 
 export type Row<More = any> = RowDefault & More
+export type RowType<More = any> = RowDefault & More
 export type PartOfRow<More = any> = Partial<RowDefault | More>
 
 
@@ -46,3 +47,5 @@ export interface StoreDispatchCallbackInfo{
    type: "data" | "meta",
    name: string
 }
+
+export type WhereType<Props> = string | PartOfRow<Props> | number

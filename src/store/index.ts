@@ -1,10 +1,10 @@
 import Meta from './Meta'
 import {DATA} from '../core/Root'
-import {Row, PartOfRow} from '../types'
+import {Row, PartOfRow, RowType, WhereType} from '../types'
 
 export default class Store<RowProps = any> extends Meta<RowProps>{
    
-   insert(row: RowProps): Row<RowProps>{
+   insert(row: RowProps): RowType<RowProps>{
       if((row as any)?._id){
          delete (row as any)._id
       }
@@ -34,7 +34,7 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
       return rows_ids
    }
    
-   insertAfter(row: RowProps, index: number): Row<RowProps>{
+   insertAfter(row: RowProps, index: number): RowType<RowProps>{
       if((row as any)?._id){
          delete (row as any)._id
       }
@@ -47,14 +47,14 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
       return format
    }
    
-   update(row: RowProps, where?: string | PartOfRow<RowProps> | number, callback?: (r: Row<RowProps>) => Row<RowProps>): void{
+   update(row: PartOfRow<RowProps>, where?: WhereType<RowProps>, callback?: (r: RowType<RowProps>) => RowType<RowProps>): void{
       let whr: any = where
       if(typeof where === 'string'){
          whr = {_id: where}
       }
       const exists = this.query(whr) || []
       if(exists.length){
-         this.query(whr, (prevRow: Row<RowProps>) => {
+         this.query(whr, (prevRow: RowType<RowProps>) => {
             if(typeof callback === 'function'){
                prevRow = callback(prevRow)
             }
@@ -69,15 +69,15 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
       }
    }
 
-   updateFirst(row: RowProps, where?: string | PartOfRow<RowProps> | number, callback?: (r: Row<RowProps>) => Row<RowProps>){
+   updateFirst(row: PartOfRow<RowProps>, where?: WhereType<RowProps>, callback?: (r: RowType<RowProps>) => RowType<RowProps>){
       const exists = this.query(where) || []
       if(exists.length){
          this.update(row, exists[0]._id, callback)
       }
    }
 
-   updateAll(row: RowProps, callback?: (r: Row<RowProps>) => Row<RowProps>): void{
-      this.query(null, (prevRow: Row<RowProps>) => {
+   updateAll(row: PartOfRow<RowProps>, callback?: (r: RowType<RowProps>) => RowType<RowProps>): void{
+      this.query(null, (prevRow: RowType<RowProps>) => {
          if(typeof callback === 'function'){
             prevRow = callback(prevRow)
          }
@@ -91,7 +91,7 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
       this.dispatch({type: 'data', name: 'updateAll'})
    }
    
-   delete(where?: string | PartOfRow<RowProps> | number): void{
+   delete(where?: WhereType<RowProps>): void{
       let whr: any = where
       if(typeof where === 'string'){
          whr = {_id: where}
@@ -117,7 +117,7 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
       this.dispatch({type: 'data', name: "deleteAll"})
    }
 
-   deleteColumns(cols: (keyof RowProps)[], where?: string | PartOfRow<RowProps> | number, callback?: (r: Row<RowProps>) => Row<RowProps>): void{
+   deleteColumns(cols: (keyof RowProps)[], where?: WhereType<RowProps>, callback?: (r: RowType<RowProps>) => RowType<RowProps>): void{
       let whr: any = where
       if(typeof where === 'string'){
          whr = {_id: where}
@@ -127,7 +127,7 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
          return
       }
       
-      this.query(whr, (prevRow: Row<RowProps>) => {
+      this.query(whr, (prevRow: RowType<RowProps>) => {
          if(typeof callback === 'function'){
             prevRow = callback(prevRow)
          }
@@ -151,28 +151,28 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
       this.dispatch({type: 'data', name: 'deleteColumns'})
    }
    
-   count(where?: string | PartOfRow<RowProps> | number): number{
+   count(where?: WhereType<RowProps>): number{
       return where ? this.find(where).length : this.getState().data.length
    }
    
-   find(where?: string | PartOfRow<RowProps> | number): (Row<RowProps>)[]{
+   find(where?: WhereType<RowProps>): (Row<RowProps>)[]{
       this.addDispatch({type: "data", name: 'find'})
       return this.query(where) || []
    }
 
-   findFirst(where?: string | PartOfRow<RowProps> | number): (Row<RowProps>) | null {
+   findFirst(where?: WhereType<RowProps>): (Row<RowProps>) | null {
       this.addDispatch({type: "data", name: 'findFirst'})
       const ex = this.find(where)
       return ex.length ? ex[0] : null
    }
 
-   findById(_id: string): Row<RowProps> | null{
+   findById(_id: string): RowType<RowProps> | null{
       this.addDispatch({type: "data", name: 'findById'})
       const ex = this.find({_id})
       return ex.length ? ex[0] : null
    }
 
-   findAll(): Row<RowProps>[]{
+   findAll(): RowType<RowProps>[]{
       return this.getState().data
    }
 
