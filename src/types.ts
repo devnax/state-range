@@ -23,11 +23,11 @@ export interface RowDefault{
 export type Row<More = any> = RowDefault & More
 export type RowType<More = any> = RowDefault & More
 export type PartOfRow<More = any> = Partial<RowDefault | More>
-
+export type MetaRowType = Row<{meta_key: string, meta_value: any}>
 
 export interface STATE_FORMAT<RowType = object>{
    data: Row<RowType>[];
-   meta: object[];
+   meta: PartOfRow<MetaRowType>[];
 }
 
 export type STATE_TYPES = {
@@ -49,3 +49,13 @@ export interface StoreDispatchCallbackInfo{
 }
 
 export type WhereType<Props> = string | PartOfRow<Props>
+
+
+
+export interface QueryCallbackTypeProps<P>{
+   value: Row<P>; 
+   type: any; 
+   payload: any;
+   index: number;
+}
+export type QueryCallbackType<Props> = (options: QueryCallbackTypeProps<Props>) => PartOfRow<Props> | null | void

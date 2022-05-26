@@ -1,58 +1,149 @@
+
+export interface FormatedQuery {
+   select: {
+      query: string;
+      value: string[];
+      valueType: "value" | "parent";
+   };
+   where: {
+      query: string;
+      value: string;
+      valueType: "value" | "parent";
+   };
+   orderby: {
+      query: string;
+      value: [string, string];
+      valueType: "value" | "parent";
+   };
+   limit: {
+      query: string;
+      value: number[];
+      valueType: "value" | "parent";
+   };
+}
+
+
 const formaters: any = {
-   from: (q: string) => q.replace(/ /g, ""),
-   insert: (q: string) => q.replace(/ /g, "").split(","),
-   values: (q: string) => q.replace(/ /g, "").split(","),
-   update: (q: string) => {
-      q = q.replace(/ /g, "");
-      const splitWithComa = q.split(",");
-      const val: any = {};
-      for (let item of splitWithComa) {
-         const s = item.split("=");
-         val[s[0]] = s[1];
+   select: (q: string) => {
+      return {
+         query: null,
+         value: q.replace(/ /g, "").split(","),
+         valueType: "value"
       }
-      return val;
    },
-   delete: () => { },
-   select: (q: string) => q.replace(/ /g, "").split(","),
    where: (q: string) => {
-      return q.replace(/ /g, "");
+      // SINGLE EQUAL TO DOUBLE
+      q = q.replace(/=+/g, "==");
+
+      // REMOVE MULTIPLE SPACE TO SINGLE
+      q = q.replace(/ +/g, " ").trim();
+      q = q.replace(/\s?(&&|\|\|)\s?/g, "$1").trim();
+
+      const split = q.split(/(&&|\|\|)/gi);
+      let query = "";
+      for (let i = 0; i < split.length; i++) {
+         let item = split[i];
+         if (item === "&&" || item === "||") {
+            if (!query || !split[i + 1]) {
+               console.error(`unexpected operator ${item}`)
+            } else {
+               query += item;
+            }
+         } else {
+            item = item.replace(/(\w+==)/gi, "@.$1");
+            // @property.match(val)
+            item = item.replace(
+               /@\w+\s+like\s+['|"]?([a-zA-Z0-9%]+)['|"]?/gi,
+               "@property.match(/$2/i)"
+            );
+
+            // @property==a&&@.match(val)
+            item = item.replace(
+               /(\w+)\s+like\s+['|"]?([a-zA-Z0-9(%)]+)['|"]?/gi,
+               "@property=='$1'&&@.match(/$2/i)"
+            );
+
+            // add @ in single property
+            if (split[i] === item) {
+               item = `@.${item}`
+            }
+
+            query += item;
+         }
+      }
+
+      q = query
+      q = q.replace(/%(\w+)/gi, "^$1"); // replace start % to ^
+      q = q.replace(/(\w+)%/gi, "$1$"); // replace end % to $
+
+      // QUERY FORMATE
+      q = `$.[?(${q})]`;
+
+      // SINGLE EQUAL TO DOUBLE
+      q = q.replace(/=+/g, "==");
+
+      // REMOVE MULTIPLE SPACE TO SINGLE
+      q = q.replace(/ +/g, " ");
+
+      const isLikeQuery = q.match(/(\w+)\s+like/gi) ? true : false;
+
+      return {
+         query: q,
+         value: null,
+         valueType: isLikeQuery ? "parent" : "value"
+      }
    },
-   orderby: (q: string) => q.trim().split(" "),
-   limit: (q: string) =>
-      q.replace(/ /g, "").split(",").map((item) => parseInt(item))
+   limit: (q: string) => {
+      const value = q
+         .replace(/ /g, "")
+         .split("-")
+         .map((item) => parseInt(item))
+
+      return {
+         query: value.length === 2 ? `$.[${value[0]}:${value[1]}]` : `$.[0:${value[0]}]`,
+         value,
+         valueType: 'value'
+      }
+   },
+   orderby: (q: string) => {
+      const sp = q.trim().split(" ")
+      return {
+         query: null,
+         value: [sp[0], sp[1] || 'desc'],
+         valueType: null
+      }
+   }
 };
 
-const parseSql = ( sql: string, callback?: (key: string, val: any) => any) => {
-   const keys = Object.keys(formaters).join("|");
+export default (sql: string): FormatedQuery | void => {
+   if (!sql) return;
 
-   const regex = new RegExp(`(${keys})`, "gi");
+   const keys = Object.keys(formaters).join("|");
+   const regex = new RegExp(`(${keys})`, "gim");
    sql = sql.replace(/\n/gim, "").trim();
-   let find = sql.replace(regex, "|$1#");
-   let founds = find.split("|");
+   let find = sql.replace(regex, "$#{$1}");
+   let founds = find.split("$#");
    founds.shift();
 
-   let query: any = {};
+   let parse: any = {};
    let parsedKey: any[] = [];
 
    for (let f of founds) {
-      const s = f.split("#");
+      const s = f.split(/\{(\w+)\}/gi);
+      s.shift();
       const key = s[0].toLowerCase();
+      const value = s[1];
       if (parsedKey.includes(key)) {
          throw new Error(`${key} uses multiple times`);
       }
       parsedKey.push(key);
-      const value = s[1];
       if (formaters[key]) {
-         let val = formaters[key](value)
-         if (typeof callback === 'function') {
-            val = callback(key, val)
-         }
-
-         query[s[0].toLowerCase()] = val;
+         let val = formaters[key](value);
+         parse[s[0].toLowerCase()] = val;
       }
    }
-   return query;
+   return parse;
 };
 
 
-export default parseSql
+

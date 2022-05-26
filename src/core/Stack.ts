@@ -1,6 +1,5 @@
-import {makeQuery} from './utils'
-import jpath from 'jsonpath'
-import {StackProps} from '../types'
+import { StackProps } from '../types'
+import excuteQuery from "./excuteQuery";
 
 
 class Stack {
@@ -8,30 +7,22 @@ class Stack {
    STATE: StackProps[] = []
    fatchable: Pick<StackProps, 'id' | 'dispatch'> | null = null
 
-   find(jpQuery: any, cb?: any): StackProps[] {
-      let res = []
+   find(jpQuery: any, callback?: any): StackProps[] {
+
+      let result = []
       try {
-         if (typeof cb === 'function') {
-            res = jpath.apply(
-               this.STATE,
-               makeQuery(jpQuery),
-               cb)
-         } else {
-            res = jpath.query(
-               this.STATE,
-               makeQuery(jpQuery)
-            )
-         }
+         result = excuteQuery(jpQuery, this.STATE, callback)
       } catch (err) {
          console.error(err)
       }
 
-      return res
+      return result
+
    }
 
-   dispatch({storeId, type}: Partial<Pick<StackProps, 'storeId' | 'type'>>) {
-      let find: any = {storeId}
-      if(type){
+   dispatch({ storeId, type }: Partial<Pick<StackProps, 'storeId' | 'type'>>) {
+      let find: any = { storeId }
+      if (type) {
          find.type = type
       }
       const items = this.find(find)
@@ -45,14 +36,14 @@ class Stack {
       }
    }
 
-   create({storeId, type}: Pick<StackProps, 'storeId' | 'type'>) {
-      if(!this.fatchable){
+   create({ storeId, type }: Pick<StackProps, 'storeId' | 'type'>) {
+      if (!this.fatchable) {
          return;
       }
       const exists = this.find({ storeId, id: this.fatchable?.id, type })
-      if(!exists.length){
-         this.STATE.push({ 
-            ...this.fatchable, 
+      if (!exists.length) {
+         this.STATE.push({
+            ...this.fatchable,
             storeId,
             type
          })
@@ -69,8 +60,13 @@ class Stack {
       if (typeof where === 'string') {
          where = { id: where }
       }
-      this.find(where, () => null)
-      this.STATE = this.find('@')
+      const deletable: number[] = []
+      this.find(where, ({index}: any) => {
+         deletable.push(index)
+      })
+      for(let index of deletable){
+         this.STATE.splice(index, 1)
+      }
    }
 }
 

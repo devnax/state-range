@@ -8,8 +8,10 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
       if((row as any)?._id){
          delete (row as any)._id
       }
+      
       const formatRow = this.makeRow(row)
       DATA.state[this.storeId()].data.push(formatRow)
+      
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('data', 'insert')
       }
@@ -54,11 +56,11 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
       }
       const exists = this.query(whr) || []
       if(exists.length){
-         this.query(whr, (prevRow: RowType<RowProps>) => {
+         this.query(whr, ({value}) => {
             if(typeof callback === 'function'){
-               prevRow = callback(prevRow)
+               value = callback(value)
             }
-            const formate = this.makeRow(prevRow)
+            const formate = this.makeRow(value)
             return {...formate, ...row, _id: formate._id}
          })
    
@@ -77,11 +79,12 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
    }
 
    updateAll(row: PartOfRow<RowProps>, callback?: (r: RowType<RowProps>) => RowType<RowProps>): void{
-      this.query(null, (prevRow: RowType<RowProps>) => {
+      // find all where have _id
+      this.query("where _id", ({value}) => {
          if(typeof callback === 'function'){
-            prevRow = callback(prevRow)
+            value = callback(value)
          }
-         const formate = this.makeRow(prevRow)
+         const formate = this.makeRow(value)
          return {...formate, ...row, _id: formate._id}
       })
 
@@ -96,13 +99,21 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
       if(typeof where === 'string'){
          whr = {_id: where}
       }
-      const exists = this.query(whr) || []
-      if(!exists.length){
+
+      const deletable: any = []
+      
+      this.query(whr, ({index}) => {
+         deletable.push(index)
+      })
+      
+      if(!deletable.length){
          return
       }
+
+      for(let index of deletable){
+         DATA.state[this.storeId()].data.splice(index, 1)
+      }
       
-      this.query(whr, () => null)
-      DATA.state[this.storeId()].data = this.query('@')
       if(typeof (this as any).onUpdate == 'function'){
          (this as any).onUpdate('data', 'delete')
       }
@@ -127,22 +138,22 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
          return
       }
       
-      this.query(whr, (prevRow: RowType<RowProps>) => {
+      this.query(whr, ({value}) => {
          if(typeof callback === 'function'){
-            prevRow = callback(prevRow)
+            value = callback(value)
          }
 
          let change = false
          for(let col of cols){
-            if(prevRow[col]){
-               delete prevRow[col]
+            if(value[col]){
+               delete value[col]
                change = true
             }
          }
          if(change){
-            prevRow = this.makeRow(prevRow)
+            value = this.makeRow(value)
          }
-         return {...prevRow}
+         return {...value}
       })
 
       if(typeof (this as any).onUpdate == 'function'){
@@ -155,12 +166,12 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
       return where ? this.find(where).length : this.getState().data.length
    }
    
-   find(where?: WhereType<RowProps>): (Row<RowProps>)[]{
+   find(where: WhereType<RowProps>): (Row<RowProps>)[]{
       this.addDispatch({type: "data", name: 'find'})
       return this.query(where) || []
    }
 
-   findFirst(where?: WhereType<RowProps>): (Row<RowProps>) | null {
+   findFirst(where: WhereType<RowProps>): (Row<RowProps>) | null {
       this.addDispatch({type: "data", name: 'findFirst'})
       const ex = this.find(where)
       return ex.length ? ex[0] : null
@@ -168,12 +179,16 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
 
    findById(_id: string): RowType<RowProps> | null{
       this.addDispatch({type: "data", name: 'findById'})
-      const ex = this.find({_id})
+      const ex = this.find(_id)
       return ex.length ? ex[0] : null
    }
 
    findAll(): RowType<RowProps>[]{
       return this.getState().data
+   }
+
+   search(where: object){
+
    }
 
    move(oldIdx: number, newIdx: number){
@@ -192,7 +207,9 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
    getIndex(id: string): number | void{
       if(id){
          this.addDispatch({type: "data", name: 'getIndex'})
-         const data:any = this.queryNodes(id)
+         const data:any = this.query(id, () => {
+
+         })
          if(data?.length){
             return data[0].path[1]
          }

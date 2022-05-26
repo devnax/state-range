@@ -12,14 +12,16 @@ import Todo from '../models/Todo'
 
 
 const UIList = () => {
-  const todos = Todo.find()
+  const todos = Todo.findAll()
+  console.log(Todo.find("orderby title desc"));
+  
 
   React.useEffect(() => {
     const state = localStorage.getItem('state')
     if(state){
       const parsed = JSON.parse(state)
-      replaceState(parsed)
-      Todo.dispatch()
+      //replaceState(parsed)
+      //Todo.dispatch()
     }
   }, [])
   
