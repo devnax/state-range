@@ -72,7 +72,7 @@ export default class Factory<RowProps>{
     }
 
 
-    query<P = RowProps>(jpQuery: any, _callback?: QueryCallbackType<P>, customState?: Row<P>[]): Row<P>[] {
+    protected jpQuery<P = RowProps>(query: any, _callback?: QueryCallbackType<P>, customState?: Row<P>[]): Row<P>[] {
 
         let result: Row<P>[] = []
         try {
@@ -80,15 +80,15 @@ export default class Factory<RowProps>{
             let callback: any = undefined;
 
             if (_callback) {
-                callback = (value: any, type: any, payload: any) => {
+                callback = (value: Row<P>, type: string, payload: any) => {
                     let index = parseInt(payload.path.replace(/\$\[(\d+)\]/gi, '$1'))
-                    const row = _callback({value, type, payload, index})
+                    const row = _callback({ value, type, payload, index })
                     if (row && is_object(row)) {
                         state[index] = row
                     }
                 }
             }
-            result = excuteQuery<P>(jpQuery, state, callback)
+            result = excuteQuery<P>(query, state, callback)
         } catch (err) {
             console.error(err)
         }
@@ -97,8 +97,8 @@ export default class Factory<RowProps>{
     }
 
 
-    metaQuery(jpQuery: any, _callback?: QueryCallbackType<MetaRowType>): MetaRowType[] {
-        return this.query<MetaRowType>(jpQuery, _callback, DATA.state[this.storeId()].meta as any)
+    protected metaQuery(query: any, _callback?: QueryCallbackType<MetaRowType>): MetaRowType[] {
+        return this.jpQuery<MetaRowType>(query, _callback, DATA.state[this.storeId()].meta as any)
     }
 
 }

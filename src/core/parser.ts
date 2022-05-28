@@ -32,11 +32,11 @@ const formaters: any = {
       }
    },
    where: (q: string) => {
+      const isLikeQuery = q.match(/(\w+)\s+like/gi) ? true : false;
       // SINGLE EQUAL TO DOUBLE
       q = q.replace(/=+/g, "==");
-
-      // REMOVE MULTIPLE SPACE TO SINGLE
-      q = q.replace(/ +/g, " ").trim();
+      
+      // SPLIT FROM && and ||
       q = q.replace(/\s?(&&|\|\|)\s?/g, "$1").trim();
 
       const split = q.split(/(&&|\|\|)/gi);
@@ -85,8 +85,6 @@ const formaters: any = {
       // REMOVE MULTIPLE SPACE TO SINGLE
       q = q.replace(/ +/g, " ");
 
-      const isLikeQuery = q.match(/(\w+)\s+like/gi) ? true : false;
-
       return {
          query: q,
          value: null,
@@ -96,11 +94,11 @@ const formaters: any = {
    limit: (q: string) => {
       const value = q
          .replace(/ /g, "")
-         .split("-")
+         .split(",")
          .map((item) => parseInt(item))
 
       return {
-         query: value.length === 2 ? `$.[${value[0]}:${value[1]}]` : `$.[0:${value[0]}]`,
+         query: value.length === 2 && value[1] ? `$.[${value[0]}:${value[1]}]` : `$.[0:${value[0]}]`,
          value,
          valueType: 'value'
       }
@@ -120,13 +118,14 @@ export default (sql: string): FormatedQuery | void => {
 
    const keys = Object.keys(formaters).join("|");
    const regex = new RegExp(`(${keys})`, "gim");
-   sql = sql.replace(/\n/gim, "").trim();
+   sql = sql.replace(/\n/gim, " ").trim();
+   sql = sql.replace(/ +/g, " ")
    let find = sql.replace(regex, "$#{$1}");
    let founds = find.split("$#");
    founds.shift();
 
-   let parse: any = {};
-   let parsedKey: any[] = [];
+   const parse: any = {};
+   const parsedKey: any[] = [];
 
    for (let f of founds) {
       const s = f.split(/\{(\w+)\}/gi);
@@ -142,6 +141,11 @@ export default (sql: string): FormatedQuery | void => {
          parse[s[0].toLowerCase()] = val;
       }
    }
+
+   if(founds.length && !parse.where?.query && !parse.limit?.query){
+      parse['where'] = formaters.where('_id')
+   }
+   
    return parse;
 };
 

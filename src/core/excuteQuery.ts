@@ -1,64 +1,7 @@
 import { JSONPath } from "jsonpath-plus";
 import parser, {FormatedQuery} from "./parser";
 import {is_object} from './utils'
-import {QueryCallbackType} from '../types'
-
-
-const excuteWithQuery: {[key: string]: any} = {
-   where: ({query, valueType}: any, data: any[], callback?: QueryCallbackType<object>): any[] => {
-      if(query){
-         return JSONPath({ path: query, json: data, resultType: valueType, callback })
-      }
-      return data
-   },
-   limit: ({query, valueType}: any, data: any[], callback?: QueryCallbackType<object>): any[] => {
-      if(query){
-         return JSONPath({ path: query, json: data, resultType: valueType, callback })
-      }
-      return data
-   }
-}
-
-const excuteWithRaw: {[key: string]: any} = {
-   select:({value}: any, data: any[]): any[] => {
-      if(value.length && !value.includes('*')){
-         const formate = [];
-         for(let item of data){
-            const cols: any = {}
-
-            for(let colKey of value){
-               if(item[colKey]){
-                  cols[colKey] = item[colKey]
-               }
-            }
-
-            formate.push({
-               _id: item._id || '',
-               observe: item.observe || '',
-               ...cols
-            })
-         }
-
-         return formate
-      }
-      return data
-   },
-   orderby:({value}: any, data: any[]): any[] => {
-      const _data = [...data]
-      if(value){
-         const col = value[0]
-         const by = value[1]
-         return _data.sort((a, b) => {
-            if(by === 'desc'){
-               return a[col] < b[col] ? 1 : -1
-            }else{
-               return a[col] > b[col] ? 1 : -1
-            }
-         })
-      }
-      return _data
-   }
-}
+import {JPCallbackType, RowType} from '../types'
 
 
 const makeQuery = (query: any): FormatedQuery | void => {
@@ -88,8 +31,80 @@ const makeQuery = (query: any): FormatedQuery | void => {
 }
 
 
-export default <P>(query: string, json: any[], callback?: QueryCallbackType<P>): any[] => {
+const excuteWithQuery: {[key: string]: any} = {
+   where: ({query, valueType}: any, data: any[], callback?: JPCallbackType): any[] => {
+      if(query){
+         return JSONPath({ path: query, json: data, resultType: valueType, callback })
+      }
+      return data
+   },
+   limit: ({query, valueType}: any, data: any[], callback?: JPCallbackType): any[] => {
+      if(query){
+         return JSONPath({ path: query, json: data, resultType: valueType, callback })
+      }
+      return data
+   }
+}
+
+const excuteWithRaw: {[key: string]: any} = {
+   select:({value}: any, data: any[], callback?: (row: object) => object | any): any[] => {
+      if(value.length && !value.includes('*')){
+         const formate = [];
+         for(let item of data){
+            const cols: any = {}
+            if(typeof callback === 'function'){
+               const res = callback(item)
+               if(res){
+                  item = res
+               }
+            }
+            for(let colKey of value){
+               if(item[colKey]){
+                  cols[colKey] = item[colKey]
+               }
+            }
+
+            formate.push({
+               _id: item._id || '',
+               observe: item.observe || '',
+               ...cols
+            })
+         }
+
+         return formate
+      }
+      return data
+   },
+   orderby:({value}: any, data: any[], callback?: (row: object) => object | any): any[] => {
+      let _data = [...data]
+      if(value){
+         const col = value[0]
+         const by  = value[1]
+         
+         _data.sort((a, b) => {
+            if(typeof callback === 'function'){
+               const res = callback(a)
+               if(res){
+                  a = res
+               }
+            }
+
+            if(by === 'desc'){
+               return a[col] < b[col] ? 1 : -1
+            }else{
+               return a[col] > b[col] ? 1 : -1
+            }
+         })
+      }
+      return _data
+   }
+}
+
+
+
+export default <P = object>(query: string, json: any[], callback?: JPCallbackType<P>): any[] => {
    const parse = makeQuery(query)
+   
    if(!parse){
       return []
    }
@@ -106,10 +121,18 @@ export default <P>(query: string, json: any[], callback?: QueryCallbackType<P>):
       }
    }
 
+
+   const rowInfo: {[key: string]: object} = {}
+
    for(let excKey in excuteWithQuery){
       if((parse as any)[excKey]){
          const isEnd = queryKeys[queryKeys.length-1] === excKey
-         const _callback = isEnd ? callback : undefined
+         let _callback: any = isEnd ? callback : undefined
+         if(isEnd && rawKeys.length){
+            _callback = (value: RowType, type: string, payload: object) => {
+               rowInfo[value._id] = {value, type, payload}
+            }
+         }
 
          const queryOpt = (parse as any)[excKey]
          result = excuteWithQuery[excKey](queryOpt, result || json, _callback)
@@ -118,14 +141,24 @@ export default <P>(query: string, json: any[], callback?: QueryCallbackType<P>):
          }
       }
    }
-
    
    for(let excKey in excuteWithRaw){
       if((parse as any)[excKey]){
          const isEnd = rawKeys[rawKeys.length-1] === excKey
-         const _callback = isEnd ? callback : undefined
+         let _callback;
+
+         if(isEnd && callback){
+            _callback = (row: any) => {
+               if(typeof callback === 'function'){
+                  const {value, type, payload}: any = rowInfo[row._id]
+                  return callback(value, type, payload)
+               }
+            }
+         }
+
          const queryOpt = (parse as any)[excKey]
          result = excuteWithRaw[excKey](queryOpt, result || json, _callback)
+         
          if(isEnd){
             break;
          }

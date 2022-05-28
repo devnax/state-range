@@ -15,7 +15,6 @@ class Stack {
       } catch (err) {
          console.error(err)
       }
-
       return result
 
    }
@@ -51,8 +50,8 @@ class Stack {
    }
 
    update(data: Partial<StackProps>, where: Partial<StackProps>) {
-      this.find(where, (prevRow: StackProps) => {
-         return { ...prevRow, ...data, id: prevRow.id }
+      this.find(where, ({value}: any) => {
+         return { ...value, ...data, id: value.id }
       })
    }
 

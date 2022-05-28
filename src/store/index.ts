@@ -1,6 +1,7 @@
 import Meta from './Meta'
 import {DATA} from '../core/Root'
-import {Row, PartOfRow, RowType, WhereType} from '../types'
+import {Row, PartOfRow, RowType, WhereType, QueryCallbackType} from '../types'
+import { is_object } from '../core/utils'
 
 export default class Store<RowProps = any> extends Meta<RowProps>{
    
@@ -49,16 +50,16 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
       return format
    }
    
-   update(row: PartOfRow<RowProps>, where?: WhereType<RowProps>, callback?: (r: RowType<RowProps>) => RowType<RowProps>): void{
+   update(row: PartOfRow<RowProps>, where?: WhereType<RowProps>, callback?: QueryCallbackType<RowProps>): void{
       let whr: any = where
       if(typeof where === 'string'){
          whr = {_id: where}
       }
-      const exists = this.query(whr) || []
+      const exists = this.jpQuery(whr) || []
       if(exists.length){
-         this.query(whr, ({value}) => {
+         this.jpQuery(whr, ({value, ...rest}) => {
             if(typeof callback === 'function'){
-               value = callback(value)
+               callback({value, ...rest})
             }
             const formate = this.makeRow(value)
             return {...formate, ...row, _id: formate._id}
@@ -71,18 +72,18 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
       }
    }
 
-   updateFirst(row: PartOfRow<RowProps>, where?: WhereType<RowProps>, callback?: (r: RowType<RowProps>) => RowType<RowProps>){
-      const exists = this.query(where) || []
+   updateFirst(row: PartOfRow<RowProps>, where?: WhereType<RowProps>, callback?: QueryCallbackType<RowProps>){
+      const exists = this.jpQuery(where) || []
       if(exists.length){
          this.update(row, exists[0]._id, callback)
       }
    }
 
-   updateAll(row: PartOfRow<RowProps>, callback?: (r: RowType<RowProps>) => RowType<RowProps>): void{
+   updateAll(row: PartOfRow<RowProps>, callback?: QueryCallbackType<RowProps>): void{
       // find all where have _id
-      this.query("where _id", ({value}) => {
+      this.jpQuery("where _id", ({value, ...rest}) => {
          if(typeof callback === 'function'){
-            value = callback(value)
+            callback({value, ...rest})
          }
          const formate = this.makeRow(value)
          return {...formate, ...row, _id: formate._id}
@@ -102,7 +103,7 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
 
       const deletable: any = []
       
-      this.query(whr, ({index}) => {
+      this.jpQuery(whr, ({index}) => {
          deletable.push(index)
       })
       
@@ -128,52 +129,23 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
       this.dispatch({type: 'data', name: "deleteAll"})
    }
 
-   deleteColumns(cols: (keyof RowProps)[], where?: WhereType<RowProps>, callback?: (r: RowType<RowProps>) => RowType<RowProps>): void{
-      let whr: any = where
-      if(typeof where === 'string'){
-         whr = {_id: where}
-      }
-      const exists = this.query(whr) || []
-      if(!exists.length){
-         return
-      }
-      
-      this.query(whr, ({value}) => {
-         if(typeof callback === 'function'){
-            value = callback(value)
-         }
-
-         let change = false
-         for(let col of cols){
-            if(value[col]){
-               delete value[col]
-               change = true
-            }
-         }
-         if(change){
-            value = this.makeRow(value)
-         }
-         return {...value}
-      })
-
-      if(typeof (this as any).onUpdate == 'function'){
-         (this as any).onUpdate('data', 'deleteColumns')
-      }
-      this.dispatch({type: 'data', name: 'deleteColumns'})
-   }
-   
-   count(where?: WhereType<RowProps>): number{
-      return where ? this.find(where).length : this.getState().data.length
-   }
-   
-   find(where: WhereType<RowProps>): (Row<RowProps>)[]{
+   query(where: string, callback?: QueryCallbackType<RowProps>): Row<RowProps>[]{
       this.addDispatch({type: "data", name: 'find'})
-      return this.query(where) || []
+      return this.jpQuery(where, callback)
+   }
+   
+   count(where?: WhereType<RowProps>, callback?: QueryCallbackType<RowProps>): number{
+      return where ? this.find(where, callback).length : this.getState().data.length
+   }
+   
+   find(where: WhereType<RowProps>, callback?: QueryCallbackType<RowProps>): Row<RowProps>[]{
+      this.addDispatch({type: "data", name: 'find'})
+      return this.jpQuery(where, callback)
    }
 
-   findFirst(where: WhereType<RowProps>): (Row<RowProps>) | null {
+   findFirst(where: WhereType<RowProps>, callback?: QueryCallbackType<RowProps>): Row<RowProps> | null {
       this.addDispatch({type: "data", name: 'findFirst'})
-      const ex = this.find(where)
+      const ex = this.find(where, callback)
       return ex.length ? ex[0] : null
    }
 
@@ -187,12 +159,31 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
       return this.getState().data
    }
 
-   search(where: object){
-
+   // {name: '', email: ''}
+   // name="123" || email="88"
+   //  to where "name like '' && email like ''"
+   search(where: string | {[key: string]: string | number}, callback?: QueryCallbackType<RowProps>): Row<RowProps>[]{
+      let whr = 'where '
+      let opr = ''
+      if(typeof where === 'object' && is_object(where)){
+         
+         for(let key in where){
+            const value = where[key] as any
+            if(typeof value === 'string'){
+               whr += `${opr} ${key} like '${value}'`
+            }else{
+               whr += `${opr} ${key} like ${value}`
+            }
+            opr = '&&'
+         }
+      }else if(typeof where === 'string'){
+         whr += where.replace(/=/gi, ' like ')
+      }
+      this.addDispatch({type: "data", name: 'search'})
+      return this.jpQuery(whr, callback)
    }
 
    move(oldIdx: number, newIdx: number){
-      
       const row: any = DATA.state[this.storeId()].data[oldIdx]
       if(row){
          DATA.state[this.storeId()].data.splice(oldIdx, 1)
@@ -204,15 +195,22 @@ export default class Store<RowProps = any> extends Meta<RowProps>{
       }
    }
    
-   getIndex(id: string): number | void{
-      if(id){
-         this.addDispatch({type: "data", name: 'getIndex'})
-         const data:any = this.query(id, () => {
-
-         })
-         if(data?.length){
-            return data[0].path[1]
+   findIndex(where: WhereType<RowProps>, callback?: QueryCallbackType<RowProps>): number[]{
+      this.addDispatch({type: "data", name: 'getIndex'})
+      const indexes: number[] = []
+      this.jpQuery(where, ({index, ...rest}: any) => {
+         indexes.push(index)
+         if(typeof callback === 'function'){
+            callback({index, ...rest})
          }
+      })
+      return indexes
+   }
+   
+   getIndex(_id: string, callback?: QueryCallbackType<RowProps>): number | void{
+      const indexes = this.findIndex({_id}, callback)
+      if(indexes.length){
+         return indexes[0]
       }
    }
 }

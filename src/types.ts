@@ -59,3 +59,5 @@ export interface QueryCallbackTypeProps<P>{
    index: number;
 }
 export type QueryCallbackType<Props> = (options: QueryCallbackTypeProps<Props>) => PartOfRow<Props> | null | void
+
+export type JPCallbackType<Props = object> = (value: Row<Props>, type: string, payload: object ) => PartOfRow<Props> | null | void

@@ -13,15 +13,18 @@ import Todo from '../models/Todo'
 
 const UIList = () => {
   const todos = Todo.findAll()
-  console.log(Todo.find("orderby title desc"));
+  const d = Todo.query("SELECT title limit 5 orderby title desc")
+
+  console.log(d);
+  
   
 
   React.useEffect(() => {
     const state = localStorage.getItem('state')
     if(state){
       const parsed = JSON.parse(state)
-      //replaceState(parsed)
-      //Todo.dispatch()
+      replaceState(parsed)
+      Todo.dispatch()
     }
   }, [])
   

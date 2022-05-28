@@ -8,7 +8,7 @@ interface Row{
 class Todo extends Store<Row> {
 
    onUpdate(){
-      //localStorage.setItem('state', JSON.stringify(getState()))
+      localStorage.setItem('state', JSON.stringify(getState()))
    }
 
    create(title: string){
