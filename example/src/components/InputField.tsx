@@ -9,6 +9,7 @@ import {withStore, dispatch} from '../../../.'
 
 const InputField = () => {
    const title    = Todo.getMeta("title", '')
+   
    const editId   = Todo.getMeta("edit")
    // console.log("Input Field")
    
@@ -18,7 +19,7 @@ const InputField = () => {
             <TextField 
                size="small"
                fullWidth
-               value={title}
+               value={title || ""}
                onChange={(e) => {
                   Todo.setMeta("title", e.target.value)
                }}
@@ -31,7 +32,7 @@ const InputField = () => {
                   dispatch(() => {
                      if(title){
                         Todo.update({
-                           title: Todo.getMeta("title")
+                           title: Todo.getMeta("title") || ""
                         }, editId)
                      }
                      
@@ -46,7 +47,7 @@ const InputField = () => {
                dispatch(() => {
                   if(title){
                      Todo.insert({
-                        title: Todo.getMeta("title")
+                        title: Todo.getMeta("title") || ""
                      })
                   }
                   Todo.deleteMeta('title')

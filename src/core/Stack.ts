@@ -9,9 +9,9 @@ class Stack {
 
    find(jpQuery: any, callback?: any): StackProps[] {
 
-      let result = []
+      let result: any = []
       try {
-         result = excuteQuery(jpQuery, this.STATE, callback)
+         result = excuteQuery<StackProps>(jpQuery, this.STATE as any, callback)
       } catch (err) {
          console.error(err)
       }
