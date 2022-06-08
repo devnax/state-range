@@ -54,7 +54,7 @@ const formaters: any = {
             // name like ^any$ - /^.*any.*$/i.test(@.name)
             item = item.replace(
                /(\w+)\s+like\s+(\^)?([a-zA-Z0-9]+)(\$)?/gi,
-               `/$2.*$3.*$4/i.test(@.$1)`
+               `/.*$2$3$4.*/i.test(@.$1)`
             );
 
             // add @ in single property

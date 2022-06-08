@@ -34,6 +34,15 @@ export default class Meta<RowProps, MetaProps> extends Factory<RowProps>{
       return value
    }
 
+   getAllMeta(): MetaProps  | null {
+      this.addDispatch({ type: "meta", name: 'getAllMeta' })
+      const formate: any = {}
+      this.metaQuery('@where _id', ({value}) => {
+         formate[value.meta_key] = value.meta_value
+      })
+      return formate
+   }
+
    useMeta<T extends keyof MetaProps>(meta_key: T, def?: MetaProps[T]): [MetaProps[T] | null, (_data: MetaProps[T]) => MetaProps[T] | void] {
       const data = this.getMeta(meta_key, def)
       return [data, (_data) => this.setMeta(meta_key, _data)]

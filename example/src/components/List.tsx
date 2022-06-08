@@ -13,7 +13,7 @@ import Todo from '../models/Todo'
 
 const UIList = () => {
   const todos = Todo.findAll()
-  const test = Todo.find("@unique title @orderby title asc")
+  const test = Todo.find("@where title like ^nax$")
   console.log(test);
 
   React.useEffect(() => {
