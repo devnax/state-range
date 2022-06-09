@@ -76,37 +76,7 @@ const excuteWithRaw: { [key: string]: any } = {
          ...cols
       }
    },
-   unique: <Props>(data: NodeType<Props>[], fields: string[]): NodeType<Props>[] => {
-      var flags: { [key: string]: any[] } = {}, output = [];
-
-      for (let item of data) {
-         const row: any = item.value
-
-         let exists = false
-         for (let f of fields) {
-            let val: any = row[f]
-            if (typeof val === 'function') {
-               val = val.toString().replace(/\n| +/gi, '')
-            } else if (typeof val === 'object') {
-               val = JSON.stringify(val).replace(/\n| +/gi, '')
-            }
-
-            if (!flags[f]) {
-               flags[f] = []
-            }
-            if (flags[f]?.includes(row[f])) {
-               exists = true;
-               break;
-            }
-            flags[f]?.push(row[f]);
-         }
-         if (!exists) {
-            output.push(item);
-         }
-      }
-
-      return output
-   },
+   unique: true,
    orderby: <Props>(data: NodeType<Props>[], value: string[]): NodeType<Props>[] => {
       let _data = [...data]
       if (value) {
@@ -145,7 +115,7 @@ const excuteQuery = <Props>(query: string | object, json: RowType<Props>[], call
    }
 
    let queryResults: NodeType<Props>[] | null = null
-   let results: RowType<Props>[] | null = null
+   let results: RowType<Props>[] = []
 
    for (let excKey in excuteWithQuery) {
       if ((parse as any)[excKey]) {
@@ -154,23 +124,52 @@ const excuteQuery = <Props>(query: string | object, json: RowType<Props>[], call
          const queryOpt = (parse as any)[excKey]
          queryResults = excuteWithQuery[excKey](queryOpt, queryResults || json, isEnd)
          if (isEnd) {
-            if (rawKeys.includes('unique')) {
-               queryResults = excuteWithRaw.unique(queryResults, parse.unique.value)
-            }
+            
             if (rawKeys.includes('orderby')) {
                queryResults = excuteWithRaw.orderby(queryResults, parse.orderby.value)
             }
 
             if (queryResults) {
-               results = queryResults?.map(function ({ value, path }: any) {
+
+               var flags: { [key: string]: any[] } = {}, fields = parse?.unique?.value;
+
+               for(let { value, path } of queryResults){
+
+                  if(rawKeys.includes('unique')){
+                     const row: any = value
+
+                     let exists = false
+                     for (let f of fields) {
+                        let val: any = row[f]
+                        if (typeof val === 'function') {
+                           val = val.toString().replace(/\n| +/gi, '')
+                        } else if (typeof val === 'object') {
+                           val = JSON.stringify(val).replace(/\n| +/gi, '')
+                        }
+
+                        if (!flags[f]) {
+                           flags[f] = []
+                        }
+                        if (flags[f]?.includes(row[f])) {
+                           exists = true;
+                           break;
+                        }
+                        flags[f]?.push(row[f]);
+                     }
+                     if (exists) {
+                        continue;
+                     }
+                  }
+
                   if (rawKeys.includes('select')) {
                      value = excuteWithRaw.select(value, parse.select.value)
                   }
                   if (typeof callback === 'function') {
                      callback({ index: path[1], value })
                   }
-                  return value
-               })
+                  results.push(value)
+               }
+
             }
             break;
          }

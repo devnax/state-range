@@ -80,15 +80,8 @@ export default class Factory<RowProps>{
     protected jpQuery<P = RowProps>(query: WhereType<P>, _callback?: QueryCallbackType<P>, customState?: Row<P>[]): Row<P>[] {
         let results: Row<P>[] = []
         try {
-
-            // const cacheData = this.getCache(query)
-            // if (cacheData) {
-            //     console.log(query);
-            //     return cacheData
-            // }
             const state = customState || DATA.state[this.storeId()].data
             results = excuteQuery<P>(query, state, _callback)
-            // this.setCache(query, results)
         } catch (err) {
             console.error(err)
         }

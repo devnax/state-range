@@ -92,19 +92,10 @@ export default class Store<RowProps = object, MetaProps = { [key: string]: any }
    }
 
    delete(where: WhereType<RowProps>): void {
-      const deletable: any = []
       this.jpQuery(where, ({ index }) => {
-         deletable.push(index)
+         DATA.state[this.storeId()].data[index] = {}
       })
-
-      if (!deletable.length) {
-         return
-      }
-
-      for (let index of deletable) {
-         DATA.state[this.storeId()].data.splice(index, 1)
-      }
-
+      DATA.state[this.storeId()].data = this.jpQuery("@where _id")
       if (typeof (this as any).onUpdate == 'function') {
          (this as any).onUpdate('data', 'delete')
       }
@@ -160,8 +151,8 @@ export default class Store<RowProps = object, MetaProps = { [key: string]: any }
       return ex.length ? ex[0] : null
    }
 
-   findById(_id: string): RowType<RowProps> | null {
-      const ex = this.find(_id)
+   findById(_id: string, callback?: QueryCallbackType<RowProps>): RowType<RowProps> | null {
+      const ex = this.find(_id, callback)
       return ex.length ? ex[0] : null
    }
 
@@ -206,23 +197,15 @@ export default class Store<RowProps = object, MetaProps = { [key: string]: any }
       }
    }
 
-   findIndex(where: WhereType<RowProps>, callback?: QueryCallbackType<RowProps>): number[] {
-      this.addDispatch({ type: "data", name: 'getIndex' })
-
-      const indexes: number[] = []
-      this.jpQuery(where, ({ index, value }: any) => {
-         indexes.push(index)
-         if (typeof callback === 'function') {
-            callback({ index, value })
-         }
-      })
-      return indexes
-   }
-
    getIndex(_id: string, callback?: QueryCallbackType<RowProps>): number | void {
-      const indexes = this.findIndex({ _id }, callback)
-      if (indexes.length) {
-         return indexes[0]
-      }
+      let idx;
+      this.findById(_id, ({value, index}) => {
+         if(typeof callback === 'function'){
+            callback({value, index})
+         }
+         idx = index
+      })
+
+      return idx
    }
 }

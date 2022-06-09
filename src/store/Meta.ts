@@ -49,16 +49,10 @@ export default class Meta<RowProps, MetaProps> extends Factory<RowProps>{
    }
 
    deleteMeta(meta_key: keyof MetaProps) {
-      const deletable: any = []
       this.metaQuery({ meta_key }, ({ index }) => {
-         deletable.push(index)
+         DATA.state[this.storeId()].meta[index] = {} as any
       })
-      if (!deletable.length) {
-         return
-      }
-      for (let index of deletable) {
-         DATA.state[this.storeId()].meta.splice(index, 1)
-      }
+      DATA.state[this.storeId()].meta = this.metaQuery("@where _id")
       if (typeof (this as any).onUpdate == 'function') {
          (this as any).onUpdate('meta', 'deleteMeta')
       }

@@ -13,7 +13,7 @@ import Todo from '../models/Todo'
 
 const UIList = () => {
   const todos = Todo.findAll()
-  const test = Todo.getAllMeta()
+  const test = Todo.find("@unique title")
   console.log(test);
 
   React.useEffect(() => {
