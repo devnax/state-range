@@ -58,13 +58,9 @@ export default class Store<RowProps = object, MetaProps = { [key: string]: any }
 
    update(row: PartOfRow<RowProps>, where: WhereType<RowProps>, callback?: QueryCallbackType<RowProps>): void {
 
-      let whr: any = where
-      if (typeof where === 'string') {
-         whr = { _id: where }
-      }
-      const exists = this.jpQuery(whr)
+      const exists = this.jpQuery(where)
       if (exists.length) {
-         this.jpQuery(whr, ({ value, index }) => {
+         this.jpQuery(where, ({ value, index }) => {
             if (typeof callback === 'function') {
                callback({ value, index })
             }
@@ -95,15 +91,9 @@ export default class Store<RowProps = object, MetaProps = { [key: string]: any }
       this.dispatch({ type: 'data', name: 'updateAll' })
    }
 
-   delete(where?: WhereType<RowProps>): void {
-
-      let whr: any = where
-      if (typeof where === 'string') {
-         whr = { _id: where }
-      }
-
+   delete(where: WhereType<RowProps>): void {
       const deletable: any = []
-      this.jpQuery(whr, ({ index }) => {
+      this.jpQuery(where, ({ index }) => {
          deletable.push(index)
       })
 

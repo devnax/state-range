@@ -13,7 +13,7 @@ import Todo from '../models/Todo'
 
 const UIList = () => {
   const todos = Todo.findAll()
-  const test = Todo.find("@where title like ^nax$")
+  const test = Todo.getAllMeta()
   console.log(test);
 
   React.useEffect(() => {
