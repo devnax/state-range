@@ -1,98 +1,92 @@
-import { JSONPath } from "jsonpath-plus";
-import parser, {FormatedQuery} from "./parser";
-import {is_object} from './utils'
-import {JPCallbackType, RowType} from '../types'
+import JSONPath from "jsonpath";
+import parser, { FormatedQuery } from "./parser";
+import { is_object } from './utils'
+import { QueryCallbackType, RowType } from '../types'
+
+interface NodeType<RowProps> {
+   path: any[];
+   value: RowType<RowProps>
+}
 
 
-const makeQuery = (query: any): FormatedQuery | void => {
-   let _q = query
-   if (typeof query === 'string' && query.charAt(0) === '_') {
-      _q = `where _id='${query}'`
-   } else if (is_object(query)) {
+export const makeQuery = <Props>(query: string | Partial<Props>): FormatedQuery | void => {
+   let _q = ''
+
+   if (typeof query === 'string') {
+      if (query.charAt(0) === '_') {
+         _q = `@where _id='${query}'`
+      } else {
+         _q = query
+      }
+   } else if (typeof query === 'object' && is_object(query)) {
       let fquery: any = ''
       let and = ''
       for (let k in query) {
-         let v = query[k]
+         let v: any = query[k]
          if (typeof v === 'string') {
             v = `'${v}'`
          }
          fquery += `${and}${k}==${v}`
          and = '&&'
       }
-      
+
       if (fquery) {
-         _q = `where ${fquery}`
+         _q = `@where ${fquery}`
       }
-   }else if(Array.isArray(query)){
-      _q = `select ${query.join(',')}`
    }
 
    return parser(_q)
 }
 
-
-const excuteWithQuery: {[key: string]: any} = {
-   where: ({query, valueType}: any, data: any[], callback?: JPCallbackType): any[] => {
-      if(query){
-         return JSONPath({ path: query, json: data, resultType: valueType, callback })
+const excuteWithQuery: { [key: string]: any } = {
+   where: <Props>({ query }: any, data: any[], isEndQuery: boolean): RowType<Props>[] | NodeType<Props>[] => {
+      if (query) {
+         if (isEndQuery) {
+            return JSONPath.nodes(data, query)
+         } else {
+            return JSONPath.query(data, query)
+         }
       }
       return data
    },
-   limit: ({query, valueType}: any, data: any[], callback?: JPCallbackType): any[] => {
-      if(query){
-         return JSONPath({ path: query, json: data, resultType: valueType, callback })
+   limit: <Props>({ query }: any, data: RowType<Props>[], isEndQuery: boolean): RowType<Props>[] | NodeType<Props>[] => {
+      if (query) {
+         if (isEndQuery) {
+            return JSONPath.nodes(data, query)
+         } else {
+            return JSONPath.query(data, query)
+         }
       }
       return data
    }
 }
 
-const excuteWithRaw: {[key: string]: any} = {
-   select:({value}: any, data: any[], callback?: (row: object) => object | any): any[] => {
-      if(value.length && !value.includes('*')){
-         const formate = [];
-         for(let item of data){
-            const cols: any = {}
-            if(typeof callback === 'function'){
-               const res = callback(item)
-               if(res){
-                  item = res
-               }
-            }
-            for(let colKey of value){
-               if(item[colKey]){
-                  cols[colKey] = item[colKey]
-               }
-            }
+const excuteWithRaw: { [key: string]: any } = {
+   select: <Props>(row: RowType<Props>, columns: string[]): RowType<Props> => {
+      const cols: any = {}
 
-            formate.push({
-               _id: item._id || '',
-               observe: item.observe || '',
-               ...cols
-            })
+      for (let colKey in row) {
+         if (columns.includes(colKey)) {
+            cols[colKey] = (row as any)[colKey]
          }
-
-         return formate
       }
-      return data
+      return {
+         _id: row._id || '',
+         observe: row.observe || '',
+         ...cols
+      }
    },
-   orderby:({value}: any, data: any[], callback?: (row: object) => object | any): any[] => {
+   unique: true,
+   orderby: <Props>(data: NodeType<Props>[], value: string[]): NodeType<Props>[] => {
       let _data = [...data]
-      if(value){
+      if (value) {
          const col = value[0]
-         const by  = value[1]
-         
-         _data.sort((a, b) => {
-            if(typeof callback === 'function'){
-               const res = callback(a)
-               if(res){
-                  a = res
-               }
-            }
-
-            if(by === 'desc'){
-               return a[col] < b[col] ? 1 : -1
-            }else{
-               return a[col] > b[col] ? 1 : -1
+         const by = value[1]
+         _data.sort((a: any, b: any) => {
+            if (by === 'desc') {
+               return a.value[col] < b.value[col] ? 1 : -1
+            } else {
+               return a.value[col] > b.value[col] ? 1 : -1
             }
          })
       }
@@ -102,68 +96,87 @@ const excuteWithRaw: {[key: string]: any} = {
 
 
 
-export default <P = object>(query: string, json: any[], callback?: JPCallbackType<P>): any[] => {
+const excuteQuery = <Props>(query: string | object, json: RowType<Props>[], callback?: QueryCallbackType<Props>): RowType<Props>[] => {
    const parse = makeQuery(query)
-   
-   if(!parse){
+   if (!parse) {
       return []
    }
-   
-   let result: object[] | null = null
-   const queryKeys = [];
-   const rawKeys = [];
 
-   for(let key in parse){
-      if(excuteWithQuery[key]){
+
+   const queryKeys = [];
+   const rawKeys: any = [];
+
+   for (let key in parse) {
+      if (excuteWithQuery[key]) {
          queryKeys.push(key)
-      }else if(excuteWithRaw[key]){
+      } else if (excuteWithRaw[key]) {
          rawKeys.push(key)
       }
    }
 
+   let queryResults: NodeType<Props>[] | null = null
+   let results: RowType<Props>[] = []
 
-   const rowInfo: {[key: string]: object} = {}
-
-   for(let excKey in excuteWithQuery){
-      if((parse as any)[excKey]){
-         const isEnd = queryKeys[queryKeys.length-1] === excKey
-         let _callback: any = isEnd ? callback : undefined
-         if(isEnd && rawKeys.length){
-            _callback = (value: RowType, type: string, payload: object) => {
-               rowInfo[value._id] = {value, type, payload}
-            }
-         }
+   for (let excKey in excuteWithQuery) {
+      if ((parse as any)[excKey]) {
+         const isEnd = queryKeys[queryKeys.length - 1] === excKey
 
          const queryOpt = (parse as any)[excKey]
-         result = excuteWithQuery[excKey](queryOpt, result || json, _callback)
-         if(isEnd){
-            break;
-         }
-      }
-   }
-   
-   for(let excKey in excuteWithRaw){
-      if((parse as any)[excKey]){
-         const isEnd = rawKeys[rawKeys.length-1] === excKey
-         let _callback;
+         queryResults = excuteWithQuery[excKey](queryOpt, queryResults || json, isEnd)
+         if (isEnd) {
+            
+            if (rawKeys.includes('orderby')) {
+               queryResults = excuteWithRaw.orderby(queryResults, parse.orderby.value)
+            }
 
-         if(isEnd && callback){
-            _callback = (row: any) => {
-               if(typeof callback === 'function'){
-                  const {value, type, payload}: any = rowInfo[row._id]
-                  return callback(value, type, payload)
+            if (queryResults) {
+
+               var flags: { [key: string]: any[] } = {}, fields = parse?.unique?.value;
+
+               for(let { value, path } of queryResults){
+
+                  if(rawKeys.includes('unique')){
+                     const row: any = value
+
+                     let exists = false
+                     for (let f of fields) {
+                        let val: any = row[f]
+                        if (typeof val === 'function') {
+                           val = val.toString().replace(/\n| +/gi, '')
+                        } else if (typeof val === 'object') {
+                           val = JSON.stringify(val).replace(/\n| +/gi, '')
+                        }
+
+                        if (!flags[f]) {
+                           flags[f] = []
+                        }
+                        if (flags[f]?.includes(row[f])) {
+                           exists = true;
+                           break;
+                        }
+                        flags[f]?.push(row[f]);
+                     }
+                     if (exists) {
+                        continue;
+                     }
+                  }
+
+                  if (rawKeys.includes('select')) {
+                     value = excuteWithRaw.select(value, parse.select.value)
+                  }
+                  if (typeof callback === 'function') {
+                     callback({ index: path[1], value })
+                  }
+                  results.push(value)
                }
-            }
-         }
 
-         const queryOpt = (parse as any)[excKey]
-         result = excuteWithRaw[excKey](queryOpt, result || json, _callback)
-         
-         if(isEnd){
+            }
             break;
          }
       }
    }
-   
-   return result || []
+
+   return results || []
 }
+
+export default excuteQuery

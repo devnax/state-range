@@ -1,21 +1,26 @@
-import { uid, is_object } from "../core/utils";
+import { uid } from "../core/utils";
 import Stack from '../core/Stack'
-import { Row, MetaRowType, QueryCallbackType, STATE_FORMAT, StoreDispatchCallbackInfo } from "../types";
+import { Row, MetaRowType, WhereType, QueryCallbackType, STATE_FORMAT, StoreDispatchCallbackInfo } from "../types";
 import { DATA } from '../core/Root'
 import excuteQuery from "../core/excuteQuery";
 
 
-export default class Factory<RowProps>{
+export default abstract class Factory<RowProps>{
     protected _observe_data = 0
     protected _observe_meta = 0
     protected index: number = 0
-    storeId = () => this.index ? this.constructor.name + this.index : this.constructor.name
+    store_id: string | null = null;
 
     constructor() {
         while (DATA.state[this.storeId()]) {
             this.index += 1
         }
         DATA.state[this.storeId()] = { data: [], meta: [] }
+    }
+
+    storeId = () => {
+        let name = this.constructor.name + this.store_id
+        return this.index ? name + this.index : name
     }
 
     getState(): STATE_FORMAT<RowProps> {
@@ -28,6 +33,18 @@ export default class Factory<RowProps>{
     }
 
     dispatch(info?: StoreDispatchCallbackInfo) {
+        const isData = info?.type === 'data'
+        if (info?.type) {
+            if (isData) {
+                this._observe_data = Date.now()
+            } else {
+                this._observe_meta = Date.now()
+            }
+        } else {
+            this._observe_data = Date.now()
+            this._observe_meta = Date.now()
+        }
+
 
         if (!DATA.noDispatch) {
             if (DATA.onDispatch) {
@@ -39,18 +56,9 @@ export default class Factory<RowProps>{
                 const getStack = Stack.find(find)
                 DATA.onDispatchModules = [...DATA.onDispatchModules, ...getStack]
             } else {
-
                 if (info?.type) {
-                    const isData = info.type === 'data'
-                    if (isData) {
-                        this._observe_data = Date.now()
-                    } else {
-                        this._observe_meta = Date.now()
-                    }
                     Stack.dispatch({ storeId: this.storeId(), type: info.type })
                 } else {
-                    this._observe_data = Date.now()
-                    this._observe_meta = Date.now()
                     Stack.dispatch({ storeId: this.storeId() })
                 }
             }
@@ -72,28 +80,15 @@ export default class Factory<RowProps>{
     }
 
 
-    protected jpQuery<P = RowProps>(query: any, _callback?: QueryCallbackType<P>, customState?: Row<P>[]): Row<P>[] {
-
-        let result: Row<P>[] = []
+    protected jpQuery<P = RowProps>(query: WhereType<P>, _callback?: QueryCallbackType<P>, customState?: Row<P>[]): Row<P>[] {
+        let results: Row<P>[] = []
         try {
             const state = customState || DATA.state[this.storeId()].data
-            let callback: any = undefined;
-
-            if (_callback) {
-                callback = (value: Row<P>, type: string, payload: any) => {
-                    let index = parseInt(payload.path.replace(/\$\[(\d+)\]/gi, '$1'))
-                    const row = _callback({ value, type, payload, index })
-                    if (row && is_object(row)) {
-                        state[index] = row
-                    }
-                }
-            }
-            result = excuteQuery<P>(query, state, callback)
+            results = excuteQuery<P>(query, state, _callback)
         } catch (err) {
             console.error(err)
         }
-
-        return result
+        return results
     }
 
 

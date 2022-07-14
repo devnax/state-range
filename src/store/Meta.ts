@@ -2,22 +2,17 @@ import Factory from './Factory'
 import { DATA } from '../core/Root'
 import { MetaRowType } from "../types";
 
-export default class Meta<RowProps> extends Factory<RowProps>{
+export default abstract class Meta<RowProps, MetaProps> extends Factory<RowProps>{
 
-   setMeta(meta_key: string, meta_value: any) {
+   setMeta<T extends keyof MetaProps>(meta_key: T, meta_value: MetaProps[T]) {
       const exists = this.metaQuery({ meta_key })
-
       if (exists.length) {
-         this.metaQuery({ meta_key }, ({ value }) => {
+         this.metaQuery({ meta_key }, ({ value, index }): any => {
             const row = this.makeRow(value)
-            return { ...row, meta_value, _id: row._id }
+            DATA.state[this.storeId()].meta[index] = { ...row, meta_key, meta_value, _id: row._id }
          })
       } else {
-         const row = this.makeRow({
-            meta_key,
-            meta_value
-         })
-
+         const row = this.makeRow({ meta_key, meta_value })
          DATA.state[this.storeId()].meta.push(row)
       }
 
@@ -27,34 +22,37 @@ export default class Meta<RowProps> extends Factory<RowProps>{
       this.dispatch({ type: 'meta', name: 'setMeta' })
    }
 
-   getMeta(meta_key: string, def?: any): any {
+   getMeta<T extends keyof MetaProps>(meta_key: T, def?: MetaProps[T]): MetaProps[T] | null {
       this.addDispatch({ type: "meta", name: 'getMeta' })
       const exists = this.metaQuery({ meta_key })
-
+      let value: any;
       if (exists.length) {
-         return exists[0].meta_value
+         value = exists[0].meta_value
       } else {
-         return def !== undefined ? def : null
+         value = def !== undefined ? def : null
       }
+      return value
    }
 
-   useMeta(meta_key: string, def?: any): [any, (_data: any) => any] {
-      const data = this.getMeta(meta_key, def)
-      return [data, (_data: any) => this.setMeta(meta_key, _data)]
-   }
-
-   deleteMeta(meta_key: string) {
-      (this as any)._observe = Date.now()
-      const deletable: any = []
-      this.metaQuery({ meta_key }, ({ index }) => {
-         deletable.push(index)
+   getAllMeta(): MetaProps  | null {
+      this.addDispatch({ type: "meta", name: 'getAllMeta' })
+      const formate: any = {}
+      this.metaQuery('@where _id', ({value}) => {
+         formate[value.meta_key] = value.meta_value
       })
-      if (!deletable.length) {
-         return
-      }
-      for (let index of deletable) {
-         DATA.state[this.storeId()].meta.splice(index, 1)
-      }
+      return formate
+   }
+
+   useMeta<T extends keyof MetaProps>(meta_key: T, def?: MetaProps[T]): [MetaProps[T] | null, (_data: MetaProps[T]) => MetaProps[T] | void] {
+      const data = this.getMeta(meta_key, def)
+      return [data, (_data) => this.setMeta(meta_key, _data)]
+   }
+
+   deleteMeta(meta_key: keyof MetaProps) {
+      this.metaQuery({ meta_key }, ({ index }) => {
+         DATA.state[this.storeId()].meta[index] = {} as any
+      })
+      DATA.state[this.storeId()].meta = this.metaQuery("@where _id")
       if (typeof (this as any).onUpdate == 'function') {
          (this as any).onUpdate('meta', 'deleteMeta')
       }
@@ -62,7 +60,6 @@ export default class Meta<RowProps> extends Factory<RowProps>{
    }
 
    deleteAllMeta() {
-      (this as any)._observe = Date.now()
       DATA.state[this.storeId()].meta = []
       if (typeof (this as any).onUpdate == 'function') {
          (this as any).onUpdate('meta', 'deleteAllMeta')
@@ -70,17 +67,19 @@ export default class Meta<RowProps> extends Factory<RowProps>{
       this.dispatch({ type: 'meta', name: 'deleteAllMeta' })
    }
 
-   getMetaInfo(meta_key: string, def?: any): MetaRowType | null {
+   getMetaInfo<T extends keyof MetaProps>(meta_key: T, def?: MetaProps[T]): MetaRowType | null {
       this.addDispatch({ type: "meta", name: 'getMetaInfo' })
       const exists = this.metaQuery({ meta_key })
+      let value: any;
       if (exists.length) {
-         return exists[0]
+         value = exists[0]
       } else {
-         return def ? { meta_key, meta_value: def, observe: 0, _id: Math.random().toString() } : null
+         value = def ? { meta_key, meta_value: def, observe: 0, _id: Math.random() } as any : null
       }
+      return value;
    }
 
-   observeMeta(meta_key: string): number {
+   observeMeta(meta_key: keyof MetaProps): number {
       const meta = this.getMetaInfo(meta_key)
       if (meta) {
          return meta.observe

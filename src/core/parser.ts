@@ -1,41 +1,35 @@
 
 export interface FormatedQuery {
-   select: {
-      query: string;
-      value: string[];
-      valueType: "value" | "parent";
-   };
    where: {
       query: string;
       value: string;
-      valueType: "value" | "parent";
-   };
-   orderby: {
-      query: string;
-      value: [string, string];
-      valueType: "value" | "parent";
    };
    limit: {
       query: string;
       value: number[];
-      valueType: "value" | "parent";
+   };
+   select: {
+      query: string | null;
+      value: string[];
+   };
+   orderby: {
+      query: string | null;
+      value: [string, string];
+   };
+   unique: {
+      query: string | null;
+      value: string[];
    };
 }
 
 
 const formaters: any = {
-   select: (q: string) => {
-      return {
-         query: null,
-         value: q.replace(/ /g, "").split(","),
-         valueType: "value"
-      }
-   },
+
    where: (q: string) => {
       const isLikeQuery = q.match(/(\w+)\s+like/gi) ? true : false;
       // SINGLE EQUAL TO DOUBLE
       q = q.replace(/=+/g, "==");
-      
+
       // SPLIT FROM && and ||
       q = q.replace(/\s?(&&|\|\|)\s?/g, "$1").trim();
 
@@ -52,15 +46,15 @@ const formaters: any = {
          } else {
             item = item.replace(/(\w+==)/gi, "@.$1");
             // @property.match(val)
-            item = item.replace(
-               /@\w+\s+like\s+['|"]?([a-zA-Z0-9%]+)['|"]?/gi,
-               "@property.match(/$2/i)"
-            );
+            // item = item.replace(
+            //    /@\w+\s+like\s+['|"]?([a-zA-Z0-9%]+)['|"]?/gi,
+            //    "@property.match(/$2/i)"
+            // );
 
-            // @property==a&&@.match(val)
+            // name like ^any$ - /^.*any.*$/i.test(@.name)
             item = item.replace(
-               /(\w+)\s+like\s+['|"]?([a-zA-Z0-9(%)]+)['|"]?/gi,
-               "@property=='$1'&&@.match(/$2/i)"
+               /(\w+)\s+like\s+(\^)?([a-zA-Z0-9]+)(\$)?/gi,
+               `/.*$2$3$4.*/i.test(@.$1)`
             );
 
             // add @ in single property
@@ -77,7 +71,7 @@ const formaters: any = {
       q = q.replace(/(\w+)%/gi, "$1$"); // replace end % to $
 
       // QUERY FORMATE
-      q = `$.[?(${q})]`;
+      q = `$[?(${q})]`;
 
       // SINGLE EQUAL TO DOUBLE
       q = q.replace(/=+/g, "==");
@@ -98,9 +92,20 @@ const formaters: any = {
          .map((item) => parseInt(item))
 
       return {
-         query: value.length === 2 && value[1] ? `$.[${value[0]}:${value[1]}]` : `$.[0:${value[0]}]`,
+         query: value.length === 2 && value[1] ? `$[${value[0]}:${value[1]}]` : `$[0:${value[0]}]`,
          value,
-         valueType: 'value'
+      }
+   },
+   select: (q: string): FormatedQuery['select'] => {
+      return {
+         query: null,
+         value: q.replace(/ /g, "").split(","),
+      }
+   },
+   unique: (q: string): FormatedQuery['unique'] => {
+      return {
+         query: null,
+         value: q.replace(/ /g, "").split(","),
       }
    },
    orderby: (q: string) => {
@@ -108,27 +113,27 @@ const formaters: any = {
       return {
          query: null,
          value: [sp[0], sp[1] || 'desc'],
-         valueType: null
       }
    }
 };
 
-export default (sql: string): FormatedQuery | void => {
+const parser = (sql: string): FormatedQuery | void => {
    if (!sql) return;
 
-   const keys = Object.keys(formaters).join("|");
+   // query string will be like: @select name @where id=1
+   const keys = '@' + Object.keys(formaters).join("|@");
    const regex = new RegExp(`(${keys})`, "gim");
    sql = sql.replace(/\n/gim, " ").trim();
    sql = sql.replace(/ +/g, " ")
-   let find = sql.replace(regex, "$#{$1}");
-   let founds = find.split("$#");
+   let find = sql.replace(regex, "_$#_{$1}");
+   let founds = find.split("_$#_");
    founds.shift();
 
    const parse: any = {};
    const parsedKey: any[] = [];
 
    for (let f of founds) {
-      const s = f.split(/\{(\w+)\}/gi);
+      const s = f.split(/\{@(\w+)\}/gi);
       s.shift();
       const key = s[0].toLowerCase();
       const value = s[1];
@@ -142,12 +147,14 @@ export default (sql: string): FormatedQuery | void => {
       }
    }
 
-   if(founds.length && !parse.where?.query && !parse.limit?.query){
+   if (founds.length && !parse.where?.query && !parse.limit?.query) {
       parse['where'] = formaters.where('_id')
    }
-   
+
    return parse;
 };
+
+export default parser
 
 
 

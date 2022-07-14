@@ -9,9 +9,9 @@ class Stack {
 
    find(jpQuery: any, callback?: any): StackProps[] {
 
-      let result = []
+      let result: any = []
       try {
-         result = excuteQuery(jpQuery, this.STATE, callback)
+         result = excuteQuery<StackProps>(jpQuery, this.STATE as any, callback)
       } catch (err) {
          console.error(err)
       }
@@ -59,13 +59,10 @@ class Stack {
       if (typeof where === 'string') {
          where = { id: where }
       }
-      const deletable: number[] = []
       this.find(where, ({index}: any) => {
-         deletable.push(index)
+         this.STATE[index] = {} as any
       })
-      for(let index of deletable){
-         this.STATE.splice(index, 1)
-      }
+      this.STATE = this.find('@where id')
    }
 }
 
