@@ -1,59 +1,30 @@
 
-export interface WithStoreClassProps {
-   children?: JSX.Element;
-   id: string;
-   dispatch: Function;
-}
 
-
-
-export interface StackProps {
-   id: string;
-   storeId: string;
-   dispatch: Function;
-   type: "data" | "meta"
-}
-
-
-export interface RowDefault {
+export type RowType<More> = More & {
    _id: string;
    observe: number
 }
+export type PartOfRowType<More = any> = Partial<RowType<More>>
 
-export type Row<More = any> = RowDefault & More
-export type RowType<More = any> = RowDefault & More
-export type PartOfRow<More = any> = Partial<RowDefault | More>
-export type MetaRowType = Row<{ meta_key: string, meta_value: any }>
 
-export interface STATE_FORMAT<RowType = object> {
-   data: Row<RowType>[];
-   meta: PartOfRow<MetaRowType>[];
-}
-
-export type STATE_TYPES = {
-   [key: string]: STATE_FORMAT<Row<any>>
+export interface StateObjectTyps<RowProps, MetaProps> {
+   data: RowType<RowProps>[],
+   meta: MetaProps
 }
 
 
-export interface DispatchOptions {
-   state: STATE_TYPES;
-   noDispatch: boolean;
-   onDispatch: boolean;
-   onDispatchModules: StackProps[]
-}
 
-
-export interface StoreDispatchCallbackInfo {
+export interface DispatchableInfoTypes {
    type: "data" | "meta",
    name: string
 }
 
-export type WhereType<Props> = string | PartOfRow<Props>
 
-
-
-export interface QueryCallbackTypeProps<P = {}> {
-   value: Row<P>;
+export interface QueryCallbackTypeProps<Row = {}> {
+   value: RowType<Row>;
    index: number;
 }
-export type QueryCallbackType<Props> = (options: QueryCallbackTypeProps<Props>) => void
+export type QueryCallbackType<Row> = (options: QueryCallbackTypeProps<Row>) => void
+
+
+export type WhereType<Row> = string | Partial<RowType<Row>>

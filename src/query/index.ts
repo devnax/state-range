@@ -1,6 +1,6 @@
 import JSONPath from "jsonpath";
 import parser, { FormatedQuery } from "./parser";
-import { is_object } from './utils'
+import { is_object } from '../core'
 import { QueryCallbackType, RowType } from '../types'
 
 interface NodeType<RowProps> {
@@ -9,7 +9,7 @@ interface NodeType<RowProps> {
 }
 
 
-export const makeQuery = <Props>(query: string | Partial<Props>): FormatedQuery | void => {
+export const generateQuery = <D>(query: string | Partial<D>): FormatedQuery | void => {
    let _q = ''
 
    if (typeof query === 'string') {
@@ -96,13 +96,11 @@ const excuteWithRaw: { [key: string]: any } = {
 
 
 
-const excuteQuery = <Props>(query: string | object, json: RowType<Props>[], callback?: QueryCallbackType<Props>): RowType<Props>[] => {
-   const parse = makeQuery(query)
+export const excuteQuery = <D>(query: string | object, json: RowType<D>[], callback?: QueryCallbackType<D>): RowType<D>[] => {
+   const parse = generateQuery(query)
    if (!parse) {
       return []
    }
-
-
    const queryKeys = [];
    const rawKeys: any = [];
 
@@ -114,8 +112,8 @@ const excuteQuery = <Props>(query: string | object, json: RowType<Props>[], call
       }
    }
 
-   let queryResults: NodeType<Props>[] | null = null
-   let results: RowType<Props>[] = []
+   let queryResults: NodeType<D>[] | null = null
+   let results: RowType<D>[] = []
 
    for (let excKey in excuteWithQuery) {
       if ((parse as any)[excKey]) {
@@ -124,7 +122,7 @@ const excuteQuery = <Props>(query: string | object, json: RowType<Props>[], call
          const queryOpt = (parse as any)[excKey]
          queryResults = excuteWithQuery[excKey](queryOpt, queryResults || json, isEnd)
          if (isEnd) {
-            
+
             if (rawKeys.includes('orderby')) {
                queryResults = excuteWithRaw.orderby(queryResults, parse.orderby.value)
             }
@@ -133,9 +131,9 @@ const excuteQuery = <Props>(query: string | object, json: RowType<Props>[], call
 
                var flags: { [key: string]: any[] } = {}, fields = parse?.unique?.value;
 
-               for(let { value, path } of queryResults){
+               for (let { value, path } of queryResults) {
 
-                  if(rawKeys.includes('unique')){
+                  if (rawKeys.includes('unique')) {
                      const row: any = value
 
                      let exists = false
@@ -179,4 +177,3 @@ const excuteQuery = <Props>(query: string | object, json: RowType<Props>[], call
    return results || []
 }
 
-export default excuteQuery

@@ -22,7 +22,6 @@ export interface FormatedQuery {
    };
 }
 
-
 const formaters: any = {
 
    where: (q: string) => {
