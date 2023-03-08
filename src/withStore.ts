@@ -1,5 +1,5 @@
 import { Component, ComponentType, createElement, useId, useMemo, useState } from 'react'
-import { activityFactory, dispatchFactory } from '../core'
+import { activityFactory, dispatchFactory } from './core'
 
 type Resolver<T> = (props: T) => any[]
 
