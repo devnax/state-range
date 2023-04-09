@@ -35,14 +35,17 @@ export default abstract class Base<RowProps, MetaProps = object> {
 
     dispatch() {
         if (activityFactory.get("noDispatch")) return;
-        this.observe_store = Date.now()
+        this.observe_store = Date.now();
 
-        this.dispatchable.forEach((_info, id) => {
-            const _disp = dispatchFactory.get(id)
+        [...this.dispatchable].forEach((item) => {
+            const id = item[0]
+            const _disp = dispatchFactory.get(item[0] /** compId */)
             if (_disp) {
                 _disp.dispatch()
+            } else {
+                this.dispatchable.delete(id)
             }
-        })
+        });
 
         if (this.onUpdate) {
             this.onUpdate(this.state)
