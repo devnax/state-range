@@ -7,51 +7,47 @@ import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ModeEditIcon from '@mui/icons-material/ModeEdit';
 
-import {dispatch, withStore, replaceState} from '../../../.'
+import { withStore } from '../../../.'
 import Todo from '../models/Todo'
 
 
 const UIList = () => {
-  const todos = Todo.findAll()
-  const test = Todo.find("@unique title")
-  console.log(test);
+  const todos = Todo.getAll()
 
   React.useEffect(() => {
     const state = localStorage.getItem('state')
-    if(state){
+    if (state) {
       // const parsed = JSON.parse(state)
       // replaceState(parsed)
       // Todo.dispatch()
     }
   }, [])
-  
+
   return (
-    <List sx={{ width: '100%', mt: 2,bgcolor: 'background.paper' }}>
-      {todos.map(({title, _id}, idx) => {
+    <List sx={{ width: '100%', mt: 2, bgcolor: 'background.paper' }}>
+      {todos.map(({ title, _id }, idx) => {
 
         return (
           <ListItem
             key={idx}
             secondaryAction={
               <>
-                <IconButton  onClick={() => {
-                  dispatch(() => {
-                    Todo.setMeta('title', title)
-                    Todo.setMeta('edit', _id)
-                  })
+                <IconButton onClick={() => {
+                  Todo.setMeta('title', title)
+                  Todo.setMeta('edit', _id)
                 }}>
                   <ModeEditIcon />
                 </IconButton>
-                <IconButton onClick={() => Todo.delete(_id)}>
+                <IconButton onClick={() => Todo.delete({ _id })}>
                   <DeleteIcon />
                 </IconButton>
-                
+
               </>
             }
             disablePadding
           >
             <ListItemButton role={undefined} dense>
-              <ListItemText  primary={title} />
+              <ListItemText primary={title} />
             </ListItemButton>
           </ListItem>
         );
