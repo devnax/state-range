@@ -21,7 +21,7 @@ export abstract class Store<Data extends object = {}, MetaProps extends object =
 
     private _row(row: Data): ResultType<Data> {
         const _id = (row as any)?._id || Math.random().toString(36).substring(2)
-        return { ...row, _id, _observe: Date.now() } as any
+        return { ...row, _id, _observe: (row as any)._observe === undefined ? 0 : Date.now().toString() } as any
     }
 
     private _cacheKey(w: QueryType<Data>) {
