@@ -12,6 +12,16 @@ export type CallbackType<D> = (data: ResultType<D>, index: number) => void | D
 export type QueryType<D> = QType<ResultType<D>>
 
 
+export const uid = (row: object) => {
+    let str = JSON.stringify(row)
+    var hash = 0, len = str.length;
+    for (var i = 0; i < len; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0;
+    }
+    return hash.toString(32).slice(-10).replace("-", "") + len;
+}
+
 export abstract class Store<Data extends object = {}, MetaProps extends object = {}> {
     private _dispatches: string[] = []
     private _data: ResultType<Data>[] = []
@@ -20,8 +30,9 @@ export abstract class Store<Data extends object = {}, MetaProps extends object =
     public observe = 0
 
     private _row(row: Data): ResultType<Data> {
-        const _id = (row as any)?._id || Math.random().toString(36).substring(2)
-        return { ...row, _id, _observe: (row as any)._observe === undefined ? 0 : Date.now().toString() } as any
+        const _id = (row as any)?._id || uid(row)
+        let _observe = (row as any)._observe === undefined ? 0 : Date.now().toString()
+        return { ...row, _id, _observe } as any
     }
 
     private _cacheKey(w: QueryType<Data>) {
