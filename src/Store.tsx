@@ -30,7 +30,7 @@ export abstract class Store<Data extends object = {}, MetaProps extends object =
     public observe = 0
 
     private _row(row: Data): ResultType<Data> {
-        const _id = (row as any)?._id || uid(row)
+        const _id = (row as any)?._id || (uid(row) + this._data.length)
         let _observe = (row as any)._observe === undefined ? 0 : Date.now().toString()
         return { ...row, _id, _observe } as any
     }
