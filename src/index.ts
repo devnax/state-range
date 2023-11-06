@@ -1,4 +1,4 @@
 export * from './withStore'
 export * from './withMemo'
-export { Store } from './Store'
+export { Store, noDispatch } from './Store'
 export type { ResultType, CallbackType, QueryType } from './Store'

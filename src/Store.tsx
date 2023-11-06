@@ -1,6 +1,6 @@
 import { find, QueryType as QType } from './dataFinder'
 export const DISPATCHES = new Map<string, Function>()
-export const STOREINFO = new Map<"CURRENT_ID", any>()
+export const STOREINFO = new Map<"CURRENT_ID" | "NO_DISPATCH", any>()
 
 export type ResultType<D> = D & {
     _id: string;
@@ -11,6 +11,13 @@ export type ResultType<D> = D & {
 export type CallbackType<D> = (data: ResultType<D>, index: number) => void | D
 export type QueryType<D> = QType<ResultType<D>>
 
+
+
+export const noDispatch = (callback: Function) => {
+    STOREINFO.set("NO_DISPATCH", true)
+    callback()
+    STOREINFO.delete("NO_DISPATCH")
+}
 
 export const uid = (row: object) => {
     let str = JSON.stringify(row)
@@ -52,7 +59,9 @@ export abstract class Store<Data extends object = {}, MetaProps extends object =
         [...this._dispatches].forEach(id => {
             let dispatch = DISPATCHES.get(id)
             if (dispatch) {
-                dispatch()
+                if (!STOREINFO.get("NO_DISPATCH")) {
+                    dispatch()
+                }
             } else {
                 this._dispatches.splice(this._dispatches.indexOf(id), 1)
             }
