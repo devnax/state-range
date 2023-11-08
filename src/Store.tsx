@@ -26,7 +26,7 @@ export const uid = (row: object) => {
         hash = ((hash << 5) - hash) + str.charCodeAt(i);
         hash |= 0;
     }
-    return hash.toString(32).slice(-10).replace("-", "")
+    return parseInt(hash.toString(4)).toString(32).replace("-", "").substring(0, 15)
 }
 
 export abstract class Store<Data extends object = {}, MetaProps extends object = {}> {
@@ -37,8 +37,9 @@ export abstract class Store<Data extends object = {}, MetaProps extends object =
     public observe = 0
 
     private _row(row: Data): ResultType<Data> {
-        let isOdd = this._data.length % 2 === 1
-        const _id = (row as any)?._id || (uid(isOdd ? { row, l: this._data.length } : { l: this._data.length, row }))
+        let lastId = this._data[this._data.length - 1]?._id
+
+        const _id = (row as any)?._id || (uid({ lastId, l: this._data.length, ...row }))
         let _observe = (row as any)._observe === undefined ? 0 : Date.now().toString()
         return { ...row, _id, _observe } as any
     }

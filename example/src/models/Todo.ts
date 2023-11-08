@@ -17,6 +17,8 @@ class Todo extends Store<Row, Meta> {
 
    create(title: string) {
       this.insert({ title })
+      console.log(this.getAll());
+
    }
 }
 

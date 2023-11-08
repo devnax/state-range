@@ -13,6 +13,8 @@ import Todo from '../models/Todo'
 
 const UIList = () => {
   const todos = Todo.getAll()
+  console.log(todos);
+
 
   React.useEffect(() => {
     const state = localStorage.getItem('state')

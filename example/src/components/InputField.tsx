@@ -5,13 +5,9 @@ import ModeEditIcon from '@mui/icons-material/ModeEdit';
 import Todo from '../models/Todo'
 import { withStore } from '../../../.'
 
-
-
 const InputField = () => {
    const title = Todo.getMeta("title")
-
    const editId = Todo.getMeta("edit")
-   // console.log("Input Field")
 
    return (
       <Stack direction='row' spacing={1}>
