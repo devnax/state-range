@@ -153,6 +153,14 @@ export abstract class Store<Data extends object = {}, MetaProps extends object =
         this._ditector()
         return this._meta.get(key) || def
     }
+    getAllMeta(): MetaProps {
+        this._ditector()
+        let metas: any = {}
+        this._meta.forEach((v, k) => {
+            metas[k] = v
+        })
+        return metas
+    }
     deleteMeta<T extends keyof MetaProps>(key: T) {
         this._meta.delete(key)
         this.dispatch()
