@@ -13,7 +13,7 @@ import Todo from '../models/Todo'
 
 const UIList = () => {
   const todos = Todo.getAll()
-  console.log(todos);
+  // console.log(todos);
 
 
   React.useEffect(() => {

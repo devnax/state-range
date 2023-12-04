@@ -27,6 +27,7 @@ const isInQuery = <D extends object = {}>(item: D, query: QueryType<D>, cb?: (ke
         } else {
             let fn = fns.equal
             if (typeof QVal === 'string') {
+                QVal = QVal.replace('\\', "\\\\")
                 let m = QVal.match(/\$(.*)\(/gi)
                 if (m) {
                     let fname = m[0].replace(/\$|\(/gi, "")
@@ -38,6 +39,7 @@ const isInQuery = <D extends object = {}>(item: D, query: QueryType<D>, cb?: (ke
             } else if (typeof QVal === 'boolean' && typeof DVal !== 'boolean') {
                 fn = fns.hasValue
             }
+
             if (!fn(DVal, QVal)) {
                 return false;
             } else {
